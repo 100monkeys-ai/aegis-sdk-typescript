@@ -23,7 +23,7 @@ import { AegisClient, loadManifest } from '@aegis/sdk';
 
 async function main() {
   // Create a client
-  const client = new AegisClient('https://api.reely.dev', 'your-api-key');
+  const client = new AegisClient('https://api.100monkeys.ai', 'your-api-key');
 
   // Load agent manifest
   const manifest = loadManifest('agent.yaml');
@@ -158,7 +158,7 @@ aegis-sdk-typescript/
 
 ## Documentation
 
-- [API Documentation](https://docs.reely.dev/sdk/typescript)
+- [API Documentation](https://docs.100monkeys.ai/sdk/typescript)
 - [AEGIS Architecture](https://github.com/aent-ai/aegis-greenfield/blob/main/docs/ARCHITECTURE.md)
 - [Security Model](https://github.com/aent-ai/aegis-greenfield/blob/main/docs/SECURITY.md)
 
