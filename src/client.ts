@@ -18,7 +18,7 @@ export class AegisClient {
    * Deploy an agent to the AEGIS cloud.
    */
   async deployAgent(manifest: AgentManifest): Promise<DeploymentResponse> {
-    const response = await this.client.post('/api/v1/agents', manifest);
+    const response = await this.client.post('/v1/agents', manifest);
     return response.data;
   }
 
@@ -26,7 +26,7 @@ export class AegisClient {
    * Execute a task on a deployed agent.
    */
   async executeTask(agentId: string, input: TaskInput): Promise<TaskOutput> {
-    const response = await this.client.post(`/api/v1/agents/${agentId}/execute`, input);
+    const response = await this.client.post(`/v1/agents/${agentId}/execute`, input);
     return response.data;
   }
 
@@ -34,7 +34,7 @@ export class AegisClient {
    * Get the status of an agent.
    */
   async getAgentStatus(agentId: string): Promise<AgentStatus> {
-    const response = await this.client.get(`/api/v1/agents/${agentId}/status`);
+    const response = await this.client.get(`/v1/agents/${agentId}/status`);
     return response.data;
   }
 
@@ -42,6 +42,6 @@ export class AegisClient {
    * Terminate an agent instance.
    */
   async terminateAgent(agentId: string): Promise<void> {
-    await this.client.delete(`/api/v1/agents/${agentId}`);
+    await this.client.delete(`/v1/agents/${agentId}`);
   }
 }
