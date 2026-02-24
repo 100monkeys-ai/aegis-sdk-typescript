@@ -162,8 +162,8 @@ export function validateManifest(manifest: AgentManifest): void {
   }
   
   // Validate kind
-  if (manifest.kind !== 'AgentManifest') {
-    throw new Error(`Invalid kind: expected 'AgentManifest', got '${manifest.kind}'`);
+  if (manifest.kind !== 'Agent') {
+    throw new Error(`Invalid kind: expected 'Agent', got '${manifest.kind}'`);
   }
   
   // Validate name format (DNS label)
@@ -183,7 +183,7 @@ export class AgentManifestBuilder {
   constructor(name: string, language: string, version: string) {
     this.manifest = {
       apiVersion: '100monkeys.ai/v1',
-      kind: 'AgentManifest',
+      kind: 'Agent',
       metadata: {
         name,
         version: '1.0.0',
