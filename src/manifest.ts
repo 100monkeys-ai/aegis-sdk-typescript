@@ -75,6 +75,8 @@ export interface ExecutionStrategy {
   mode?: string;
   /** Maximum refinement loops (for iterative mode) */
   max_iterations?: number;
+  /** LLM timeout in seconds (default: 300) */
+  llm_timeout_seconds?: number;
   /** Acceptance criteria */
   validation?: ValidationConfig;
 }
