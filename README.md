@@ -159,8 +159,6 @@ aegis-sdk-typescript/
 ## Documentation
 
 - [API Documentation](https://docs.100monkeys.ai/sdk/typescript)
-- [AEGIS Architecture](https://github.com/100monkeys-ai/aegis-greenfield/blob/main/docs/ARCHITECTURE.md)
-- [Security Model](https://github.com/100monkeys-ai/aegis-greenfield/blob/main/docs/SECURITY.md)
 
 ## 📜 License
 

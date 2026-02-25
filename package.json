@@ -7,7 +7,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/100monkeys-ai/aegis-greenfield"
+    "url": "https://github.com/100monkeys-ai/aegis-sdk-typescript"
   },
   "scripts": {
     "build": "tsc",
