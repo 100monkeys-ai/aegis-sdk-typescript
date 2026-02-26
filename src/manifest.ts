@@ -1,5 +1,30 @@
-import { readFileSync, writeFileSync } from 'fs';
-import { parse, stringify } from 'yaml';
+// Declare require for dynamic imports
+declare const require: (module: string) => any;
+
+// Node.js file I/O - dynamically imported in Node.js environments
+let readFileSync: (path: string, encoding: string) => string;
+let writeFileSync: (path: string, content: string, encoding: string) => void;
+
+// YAML parser - lazy loaded
+let parse: (content: string) => any;
+let stringify: (obj: any) => string;
+
+// Initialize Node.js modules if available
+try {
+  const fs = require('fs');
+  readFileSync = fs.readFileSync;
+  writeFileSync = fs.writeFileSync;
+} catch (e) {
+  // Running in browser or Deno; file I/O functions will be unavailable
+}
+
+try {
+  const yaml = require('yaml');
+  parse = yaml.parse;
+  stringify = yaml.stringify;
+} catch (e) {
+  // Fallback if yaml module is not available
+}
 
 /**
  * AEGIS agent manifest (K8s-style format, v1.0).
@@ -9,6 +34,18 @@ export interface AgentManifest {
   kind: string;
   metadata: ManifestMetadata;
   spec: AgentSpec;
+}
+
+/**
+ * Image pull policy strategy.
+ */
+export enum ImagePullPolicy {
+  /** Always pull from registry, even if cached locally. */
+  Always = 'Always',
+  /** Use local cache if available; pull only if missing (default). */
+  IfNotPresent = 'IfNotPresent',
+  /** Never pull; use only cached images (fail if missing). */
+  Never = 'Never',
 }
 
 /**
@@ -37,20 +74,31 @@ export interface AgentSpec {
   security?: SecurityConfig;
   tools?: string[];
   env?: Record<string, string>;
+  advanced?: AdvancedConfig;
 }
 
 /**
  * Runtime configuration.
+ *
+ * Supports two mutually exclusive modes:
+ * - StandardRuntime: language + version (resolved to official Docker image)
+ * - CustomRuntime: image (user-supplied fully-qualified container image)
+ *
+ * Validation ensures exactly one mode is specified (not both).
  */
 export interface RuntimeConfig {
-  /** Programming language (python, javascript, typescript, rust, go) */
-  language: string;
-  /** Language version */
-  version: string;
+  /** Programming language (python, javascript, typescript, rust, go) - StandardRuntime */
+  language?: string;
+  /** Language version - StandardRuntime */
+  version?: string;
+  /** Custom Docker image (fully-qualified: registry/repo:tag) - CustomRuntime */
+  image?: string;
+  /** Image pull policy (for custom runtimes) */
+  image_pull_policy?: ImagePullPolicy;
   /** Isolation mode (inherit, firecracker, docker, process) */
   isolation?: string;
-  /** Automatically pull runtime image */
-  autopull?: boolean;
+  /** LLM model alias */
+  model?: string;
 }
 
 /**
@@ -79,6 +127,20 @@ export interface ExecutionStrategy {
   llm_timeout_seconds?: number;
   /** Acceptance criteria */
   validation?: ValidationConfig;
+}
+
+/**
+ * Advanced configuration options.
+ */
+export interface AdvancedConfig {
+  /** Number of pre-warmed container instances */
+  warm_pool_size?: number;
+  /** Enable multi-agent coordination */
+  swarm_enabled?: boolean;
+  /** Custom startup script */
+  startup_script?: string;
+  /** Custom bootstrap script path (for CustomRuntime only) */
+  bootstrap_path?: string;
 }
 
 /**
@@ -174,15 +236,49 @@ export function validateManifest(manifest: AgentManifest): void {
   if (!dnsLabelRegex.test(name)) {
     throw new Error(`Invalid metadata.name: '${name}' must be lowercase alphanumeric with hyphens`);
   }
+  
+  // Validate runtime configuration (mutual exclusion)
+  validateRuntimeConfig(manifest.spec.runtime);
+}
+
+/**
+ * Validate runtime configuration (mutual exclusion).
+ */
+export function validateRuntimeConfig(runtime: RuntimeConfig): void {
+  const hasStandard = runtime.language && runtime.version;
+  const hasLanguageOnly = runtime.language && !runtime.version;
+  const hasVersionOnly = runtime.version && !runtime.language;
+  const hasCustom = runtime.image;
+  
+  if (hasLanguageOnly) {
+    throw new Error('language requires version to be specified');
+  }
+  if (hasVersionOnly) {
+    throw new Error('version requires language to be specified');
+  }
+  if (hasStandard && hasCustom) {
+    throw new Error('cannot specify both image and language+version (mutually exclusive)');
+  }
+  if (!hasStandard && !hasCustom) {
+    throw new Error('must specify either standard runtime (language+version) or custom runtime (image)');
+  }
+  
+  if (hasCustom && runtime.image && !runtime.image.includes('/')) {
+    throw new Error('image must be fully-qualified: registry/repo:tag (e.g., ghcr.io/org/image:v1.0)');
+  }
 }
 
 /**
  * Fluent builder for AgentManifest.
+ *
+ * Supports both standard and custom runtimes:
+ * - Standard: new AgentManifestBuilder("name", "python", "3.11")
+ * - Custom: new AgentManifestBuilder("name").withImage("ghcr.io/org/agent:v1.0")
  */
 export class AgentManifestBuilder {
   private manifest: AgentManifest;
   
-  constructor(name: string, language: string, version: string) {
+  constructor(name: string, language?: string, version?: string) {
     this.manifest = {
       apiVersion: '100monkeys.ai/v1',
       kind: 'Agent',
@@ -195,7 +291,7 @@ export class AgentManifestBuilder {
           language,
           version,
           isolation: 'inherit',
-          autopull: true,
+          image_pull_policy: ImagePullPolicy.IfNotPresent,
         },
       },
     };
@@ -239,6 +335,24 @@ export class AgentManifestBuilder {
     }
     this.manifest.spec.execution.mode = mode;
     this.manifest.spec.execution.max_iterations = maxIterations;
+    return this;
+  }
+  
+  withImage(image: string): this {
+    this.manifest.spec.runtime.image = image;
+    return this;
+  }
+  
+  withImagePullPolicy(policy: ImagePullPolicy): this {
+    this.manifest.spec.runtime.image_pull_policy = policy;
+    return this;
+  }
+  
+  withBootstrapPath(path: string): this {
+    if (!this.manifest.spec.advanced) {
+      this.manifest.spec.advanced = {};
+    }
+    this.manifest.spec.advanced.bootstrap_path = path;
     return this;
   }
   
