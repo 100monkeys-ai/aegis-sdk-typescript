@@ -2,7 +2,7 @@
 
 Official TypeScript/JavaScript SDK for building secure, autonomous agents with the AEGIS runtime.
 
-[![License](https://img.shields.io/badge/license-BSL%201.1-blue.svg)](LICENSE)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL%203.0-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/typescript-5.3%2B-blue.svg)](https://www.typescriptlang.org/)
 [![npm](https://img.shields.io/npm/v/@aegis/sdk)](https://www.npmjs.com/package/@aegis/sdk)
 
@@ -162,7 +162,7 @@ aegis-sdk-typescript/
 
 ## 📜 License
 
-Business Source License 1.1 - See [LICENSE](LICENSE) for details.
+GNU Affero General Public License v3.0 - See [LICENSE](LICENSE) for details.
 
 ## Related Repositories
 
