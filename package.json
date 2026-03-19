@@ -1,16 +1,20 @@
 {
-  "name": "@aegis/sdk",
-  "version": "0.1.0",
+  "name": "@100monkeys-ai/aegis-sdk",
+  "version": "0.11.0-pre-alpha",
   "description": "TypeScript SDK for building AEGIS agents",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "license": "AGPL-3.0",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/100monkeys-ai/aegis-sdk-typescript"
   },
   "scripts": {
     "build": "tsc",
+    "prepare": "npm run build",
     "test": "jest",
     "lint": "eslint src/**/*.ts"
   },
