@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
-import { AgentManifest, TaskInput, TaskOutput, AgentStatus, DeploymentResponse } from './types';
+import { TaskInput, TaskOutput, AgentStatus, DeploymentResponse } from './types';
+import { AgentManifest } from './manifest';
 
 /**
  * Client for interacting with the AEGIS orchestrator.
