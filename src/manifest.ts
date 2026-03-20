@@ -14,7 +14,7 @@ try {
   const fs = require('fs');
   readFileSync = fs.readFileSync;
   writeFileSync = fs.writeFileSync;
-} catch (e) {
+} catch (_e) {
   // Running in browser or Deno; file I/O functions will be unavailable
 }
 
@@ -22,7 +22,7 @@ try {
   const yaml = require('yaml');
   parse = yaml.parse;
   stringify = yaml.stringify;
-} catch (e) {
+} catch (_e) {
   // Fallback if yaml module is not available
 }
 
@@ -146,9 +146,7 @@ export interface AdvancedConfig {
 /**
  * Validation configuration.
  */
-export interface ValidationConfig {
-  // Add validation fields as needed
-}
+export type ValidationConfig = Record<string, never>;
 
 /**
  * Security configuration.
