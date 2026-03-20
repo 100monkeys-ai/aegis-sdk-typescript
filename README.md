@@ -4,22 +4,19 @@ Official TypeScript/JavaScript SDK for building secure, autonomous agents with t
 
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL%203.0-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/typescript-5.3%2B-blue.svg)](https://www.typescriptlang.org/)
-[![npm](https://img.shields.io/npm/v/@aegis/sdk)](https://www.npmjs.com/package/@aegis/sdk)
+[![GitHub Packages](https://img.shields.io/badge/packages-%40100monkeys--ai%2Faegis--sdk-blue)](https://github.com/orgs/100monkeys-ai/packages)
 
 ## Installation
 
 ```bash
-npm install @aegis/sdk
-# or
-yarn add @aegis/sdk
-# or
-pnpm add @aegis/sdk
+npm config set @100monkeys-ai:registry https://npm.pkg.github.com
+npm install @100monkeys-ai/aegis-sdk
 ```
 
 ## Quick Start
 
 ```typescript
-import { AegisClient, loadManifest } from '@aegis/sdk';
+import { AegisClient, loadManifest } from '@100monkeys-ai/aegis-sdk';
 
 async function main() {
   // Create a client
