@@ -1,11 +1,9 @@
 import axios, { AxiosInstance } from 'axios';
 import {
   TaskInput,
-  TaskOutput,
   AgentInfo,
   DeploymentResponse,
   ExecutionInfo,
-  ExecutionEvent,
   WorkflowInfo,
   WorkflowExecutionInfo,
   PendingApproval,

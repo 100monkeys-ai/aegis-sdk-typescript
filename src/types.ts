@@ -1,5 +1,3 @@
-import { AgentManifest } from './manifest';
-
 /**
  * Common types used across the SDK.
  */
