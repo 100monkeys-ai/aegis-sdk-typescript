@@ -22,6 +22,9 @@ export interface AgentInfo {
   version: string;
   description: string;
   status: string;
+  /** Tenant slug owning this agent (ADR-056). Present in API responses;
+   *  tenancy is derived from the caller's JWT — no client-side parameter needed. */
+  tenant_id?: string;
 }
 
 export enum AgentState {
@@ -38,6 +41,8 @@ export interface ExecutionInfo {
   status: string;
   started_at?: string;
   ended_at?: string;
+  /** Tenant slug owning this execution (ADR-056). */
+  tenant_id?: string;
 }
 
 export interface ExecutionEvent {
@@ -65,6 +70,8 @@ export interface WorkflowExecutionInfo {
   started_at: string;
   last_transition_at: string;
   event_count?: number;
+  /** Tenant slug owning this workflow execution (ADR-056). */
+  tenant_id?: string;
 }
 
 export interface PendingApproval {
