@@ -94,8 +94,11 @@ export class AegisClient {
   /**
    * Execute a task on a deployed agent.
    */
-  async executeTask(agentId: string, input: TaskInput): Promise<{ execution_id: string }> {
-    const response = await this.client.post(`/v1/agents/${agentId}/execute`, input);
+  async executeTask(agentId: string, input: TaskInput, options?: { version?: string }): Promise<{ execution_id: string }> {
+    const url = options?.version
+      ? `/v1/agents/${agentId}/execute?version=${options.version}`
+      : `/v1/agents/${agentId}/execute`;
+    const response = await this.client.post(url, input);
     return response.data;
   }
 
@@ -183,8 +186,12 @@ export class AegisClient {
   /**
    * Run a workflow.
    */
-  async runWorkflow(name: string, input: any): Promise<WorkflowExecutionInfo> {
-    const response = await this.client.post(`/v1/workflows/${name}/run`, { input });
+  async runWorkflow(name: string, input: any, options?: { version?: string }): Promise<WorkflowExecutionInfo> {
+    const url = options?.version
+      ? `/v1/workflows/${name}/run?version=${options.version}`
+      : `/v1/workflows/${name}/run`;
+    const body = options?.version ? { input, version: options.version } : { input };
+    const response = await this.client.post(url, body);
     return response.data;
   }
 

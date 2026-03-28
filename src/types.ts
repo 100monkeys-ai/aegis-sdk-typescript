@@ -87,6 +87,7 @@ export interface StartWorkflowExecutionRequest {
   input: any;
   blackboard?: any;
   tenant_id?: string;
+  version?: string;
 }
 
 export interface ApprovalRequest {
