@@ -16,25 +16,22 @@ npm install @100monkeys-ai/aegis-sdk
 ## Quick Start
 
 ```typescript
-import { AegisClient, loadManifest } from '@100monkeys-ai/aegis-sdk';
+import { AegisClient } from '@100monkeys-ai/aegis-sdk';
 
 async function main() {
   // Create a client
   const client = new AegisClient('https://api.100monkeys.ai', 'your-api-key');
 
-  // Load agent manifest
-  const manifest = loadManifest('agent.yaml');
+  // Start an execution
+  const { execution_id } = await client.startExecution(
+    'my-agent',
+    'Summarize my emails from today',
+  );
+  console.log(`Execution started: ${execution_id}`);
 
-  // Deploy the agent
-  const deployment = await client.deployAgent(manifest);
-  console.log(`Agent deployed: ${deployment.agent_id}`);
-
-  // Execute a task
-  const output = await client.executeTask(deployment.agent_id, {
-    prompt: 'Summarize my emails from today',
-    context: {},
-  });
-  console.log('Result:', output.result);
+  // Stream execution events
+  const stream = await client.streamExecution(execution_id);
+  // Handle SSE events from the stream...
 }
 
 main();
@@ -45,7 +42,7 @@ main();
 - **Type-safe API**: Full TypeScript type definitions
 - **Promise-based**: Modern async/await interface
 - **Manifest validation**: Runtime validation of agent configurations
-- **Zero dependencies**: Lightweight and fast
+- **Minimal dependencies**: Lightweight footprint with only essential packages
 
 ## Agent Manifest
 
@@ -81,66 +78,131 @@ env:
 class AegisClient {
   constructor(baseUrl: string, apiKey?: string)
 
-  // Agent Management
-  deployAgent(manifest: AgentManifest): Promise<DeploymentResponse>
-  listAgents(): Promise<AgentInfo[]>
-  getAgent(agentId: string): Promise<AgentManifest>
-  lookupAgent(name: string): Promise<string | null>
-  terminateAgent(agentId: string): Promise<void>
-  streamAgentEvents(agentId: string, follow?: boolean): Promise<any>
-  getAgentLogs(agentId: string, limit?: number, offset?: number): Promise<any>
+  // Execution
+  startExecution(agentId: string, input: string, contextOverrides?: any): Promise<StartExecutionResponse>
+  streamExecution(executionId: string, token?: string): Promise<any>
 
-  // Execution Management
-  executeTask(agentId: string, input: TaskInput, options?: { version?: string }): Promise<{ execution_id: string }>
-  getExecution(executionId: string): Promise<ExecutionInfo>
-  cancelExecution(executionId: string): Promise<{ success: boolean }>
-  listExecutions(agentId?: string, limit?: number): Promise<ExecutionInfo[]>
-  deleteExecution(executionId: string): Promise<{ success: boolean }>
-  streamExecutionEvents(executionId: string, follow?: boolean): Promise<any>
-
-  // Workflow Management
-  registerWorkflow(manifest: string | any, force?: boolean): Promise<any>
-  listWorkflows(): Promise<WorkflowInfo[]>
-  getWorkflow(name: string): Promise<string>
-  deleteWorkflow(name: string): Promise<{ success: boolean }>
-  runWorkflow(name: string, input: any, options?: { version?: string }): Promise<WorkflowExecutionInfo>
-  executeTemporalWorkflow(request: StartWorkflowExecutionRequest): Promise<WorkflowExecutionInfo>
-  listWorkflowExecutions(limit?: number, offset?: number): Promise<WorkflowExecutionInfo[]>
-  getWorkflowExecution(executionId: string): Promise<WorkflowExecutionInfo>
-  streamWorkflowLogs(executionId: string): Promise<any>
-  signalWorkflowExecution(executionId: string, responseText: string): Promise<{ status: string; execution_id: string }>
-  cancelWorkflowExecution(executionId: string): Promise<void>
-  removeWorkflowExecution(executionId: string): Promise<void>
-
-  // Platform Services
+  // Human Approvals
   listPendingApprovals(): Promise<{ pending_requests: PendingApproval[]; count: number }>
-  approveRequest(id: string, request?: ApprovalRequest): Promise<{ status: string; request_id: string }>
-  rejectRequest(id: string, request: RejectionRequest): Promise<{ status: string; request_id: string }>
+  getPendingApproval(id: string): Promise<{ request: PendingApproval }>
+  approveRequest(id: string, request?: ApprovalRequest): Promise<ApprovalResponse>
+  rejectRequest(id: string, request: RejectionRequest): Promise<ApprovalResponse>
+
+  // SMCP
+  attestSmcp(payload: any): Promise<SmcpAttestationResponse>
+  invokeSmcp(payload: any): Promise<any>
+  listSmcpTools(securityContext?: string): Promise<SmcpToolsResponse>
+
+  // Dispatch Gateway
   dispatchGateway(payload: any): Promise<any>
-  attestSmcp(request: AttestationRequest): Promise<{ security_token: string }>
-  invokeSmcp(envelope: SmcpEnvelope): Promise<any>
+
+  // Stimulus
+  ingestStimulus(payload: any): Promise<any>
+  sendWebhook(source: string, payload: any): Promise<any>
+
+  // Workflow Logs
+  getWorkflowExecutionLogs(executionId: string, limit?: number, offset?: number): Promise<WorkflowExecutionLogs>
+  streamWorkflowExecutionLogs(executionId: string): Promise<any>
+
+  // Admin: Tenant Management
+  createTenant(slug: string, displayName: string, tier?: string): Promise<Tenant>
+  listTenants(): Promise<{ tenants: Tenant[]; count: number }>
+  suspendTenant(slug: string): Promise<{ status: string; slug: string }>
+  deleteTenant(slug: string): Promise<{ status: string; slug: string }>
+
+  // Admin: Rate Limits
+  listRateLimitOverrides(tenantId?: string, userId?: string): Promise<{ overrides: RateLimitOverride[]; count: number }>
+  createRateLimitOverride(payload: any): Promise<RateLimitOverride>
+  deleteRateLimitOverride(overrideId: string): Promise<{ status: string; id: string }>
+  getRateLimitUsage(scopeType: string, scopeId: string): Promise<{ usage: UsageRecord[]; count: number }>
+
+  // Health
+  healthLive(): Promise<{ status: string }>
+  healthReady(): Promise<{ status: string }>
 }
 ```
 
 ### Types
 
 ```typescript
-interface AgentManifest {
-  version: string;
-  agent: AgentSpec;
-  permissions: Permissions;
-  tools: string[];
-  env?: Record<string, string>;
+interface StartExecutionResponse {
+  execution_id: string;
 }
 
-interface TaskInput {
+interface PendingApproval {
+  id: string;
+  execution_id: string;
   prompt: string;
-  context?: any;
+  created_at: string;
+  timeout_seconds: number;
 }
 
-interface TaskOutput {
-  result: any;
-  logs: string[];
+interface ApprovalRequest {
+  feedback?: string;
+  approved_by?: string;
+}
+
+interface RejectionRequest {
+  reason: string;
+  rejected_by?: string;
+}
+
+interface ApprovalResponse {
+  status: string;
+}
+
+interface SmcpAttestationResponse {
+  security_token: string;
+}
+
+interface SmcpToolsResponse {
+  protocol: string;
+  attestation_endpoint: string;
+  invoke_endpoint: string;
+  security_context?: string;
+  tools: any[];
+}
+
+interface WorkflowExecutionLogs {
+  execution_id: string;
+  events: any[];
+  count: number;
+  limit: number;
+  offset: number;
+}
+
+interface Tenant {
+  slug: string;
+  display_name: string;
+  status: string;
+  tier: string;
+  keycloak_realm: string;
+  openbao_namespace: string;
+  quotas: TenantQuotas;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string;
+}
+
+interface RateLimitOverride {
+  id: string;
+  resource_type: string;
+  bucket: string;
+  limit_value: number;
+  tenant_id?: string;
+  user_id?: string;
+  burst_value?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface UsageRecord {
+  scope_type: string;
+  scope_id: string;
+  resource_type: string;
+  bucket: string;
+  window_start: string;
+  counter: number;
 }
 ```
 
@@ -176,7 +238,7 @@ npm run lint
 
 ### Project Structure
 
-```markdown
+```text
 aegis-sdk-typescript/
 ├── src/
 │   ├── client.ts      # Main client
@@ -190,9 +252,9 @@ aegis-sdk-typescript/
 
 ## Documentation
 
-- [API Documentation](https://docs.100monkeys.ai/sdk/typescript)
+- [API Documentation](https://docs.100monkeys.ai/docs/reference/sdk-typescript)
 
-## 📜 License
+## License
 
 GNU Affero General Public License v3.0 - See [LICENSE](LICENSE) for details.
 
