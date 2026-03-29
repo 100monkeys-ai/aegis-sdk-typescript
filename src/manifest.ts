@@ -105,8 +105,6 @@ export interface RuntimeConfig {
  * Task definition.
  */
 export interface TaskConfig {
-  /** Pre-built instruction packages from agentskills.io */
-  agentskills?: string[];
   /** Steering instructions */
   instruction?: string;
   /** Custom LLM prompt template */
@@ -313,17 +311,6 @@ export class AgentManifestBuilder {
       this.manifest.spec.task = {};
     }
     this.manifest.spec.task.instruction = instruction;
-    return this;
-  }
-  
-  withAgentSkill(skill: string): this {
-    if (!this.manifest.spec.task) {
-      this.manifest.spec.task = {};
-    }
-    if (!this.manifest.spec.task.agentskills) {
-      this.manifest.spec.task.agentskills = [];
-    }
-    this.manifest.spec.task.agentskills.push(skill);
     return this;
   }
   
