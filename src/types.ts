@@ -2,77 +2,24 @@
  * Common types used across the SDK.
  */
 
-export interface DeploymentResponse {
+// --- Execution ---
+
+export interface StartExecutionRequest {
   agent_id: string;
+  input: string;
+  context_overrides?: any;
 }
 
-export interface TaskInput {
-  prompt: string;
-  context?: any;
-}
-
-export interface TaskOutput {
-  result: any;
-  logs: string[];
-}
-
-export interface AgentInfo {
-  id: string;
-  name: string;
-  version: string;
-  description: string;
-  status: string;
-  /** Tenant slug owning this agent (ADR-056). Present in API responses;
-   *  tenancy is derived from the caller's JWT — no client-side parameter needed. */
-  tenant_id?: string;
-}
-
-export enum AgentState {
-  Cold = 'cold',
-  Warm = 'warm',
-  Hot = 'hot',
-  Failed = 'failed',
-  Terminated = 'terminated',
-}
-
-export interface ExecutionInfo {
-  id: string;
-  agent_id: string;
-  status: string;
-  started_at?: string;
-  ended_at?: string;
-  /** Tenant slug owning this execution (ADR-056). */
-  tenant_id?: string;
+export interface StartExecutionResponse {
+  execution_id: string;
 }
 
 export interface ExecutionEvent {
   event_type: string;
-  timestamp: string;
-  execution_id?: string;
-  agent_id?: string;
-  iteration_number?: number;
-  action?: string;
   data: any;
 }
 
-export interface WorkflowInfo {
-  name: string;
-  version: string;
-  description: string;
-  status: string;
-}
-
-export interface WorkflowExecutionInfo {
-  execution_id: string;
-  workflow_id: string;
-  status: string;
-  current_state: string;
-  started_at: string;
-  last_transition_at: string;
-  event_count?: number;
-  /** Tenant slug owning this workflow execution (ADR-056). */
-  tenant_id?: string;
-}
+// --- Human Approvals ---
 
 export interface PendingApproval {
   id: string;
@@ -80,14 +27,6 @@ export interface PendingApproval {
   prompt: string;
   created_at: string;
   timeout_seconds: number;
-}
-
-export interface StartWorkflowExecutionRequest {
-  workflow_id: string;
-  input: any;
-  blackboard?: any;
-  tenant_id?: string;
-  version?: string;
 }
 
 export interface ApprovalRequest {
@@ -100,18 +39,110 @@ export interface RejectionRequest {
   rejected_by?: string;
 }
 
-export interface AttestationRequest {
-  agent_id: string;
-  execution_id?: string;
-  container_id: string;
-  public_key: string;
+export interface ApprovalResponse {
+  status: string;
 }
 
-export interface SmcpEnvelope {
+// --- SMCP ---
+
+export interface SmcpAttestationRequest {
+  agent_public_key: string;
+  container_id?: string;
+  agent_id?: string;
+  execution_id?: string;
+  security_context?: string;
+  principal_subject?: string;
+  user_id?: string;
+  workload_id?: string;
+  zaru_tier?: string;
+  tenant_id?: string;
+}
+
+export interface SmcpAttestationResponse {
+  security_token: string;
+}
+
+export interface SmcpToolInvokeRequest {
   security_token: string;
   signature: string;
   payload: any;
+  protocol?: string;
+  timestamp?: string;
 }
 
-export type AgentId = string;
-export type SwarmId = string;
+export interface SmcpToolsResponse {
+  protocol: string;
+  attestation_endpoint: string;
+  invoke_endpoint: string;
+  security_context?: string;
+  tools: any[];
+}
+
+// --- Workflow Logs ---
+
+export interface WorkflowExecutionLogs {
+  execution_id: string;
+  events: any[];
+  count: number;
+  limit: number;
+  offset: number;
+}
+
+// --- Admin: Tenants ---
+
+export interface CreateTenantRequest {
+  slug: string;
+  display_name: string;
+  tier?: string;
+}
+
+export interface TenantQuotas {
+  max_concurrent_executions: number;
+  max_agents: number;
+  max_storage_gb: number;
+}
+
+export interface Tenant {
+  slug: string;
+  display_name: string;
+  status: string;
+  tier: string;
+  keycloak_realm: string;
+  openbao_namespace: string;
+  quotas: TenantQuotas;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string;
+}
+
+// --- Admin: Rate Limits ---
+
+export interface CreateRateLimitOverrideRequest {
+  resource_type: string;
+  bucket: string;
+  limit_value: number;
+  tenant_id?: string;
+  user_id?: string;
+  burst_value?: number;
+}
+
+export interface RateLimitOverride {
+  id: string;
+  resource_type: string;
+  bucket: string;
+  limit_value: number;
+  tenant_id?: string;
+  user_id?: string;
+  burst_value?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UsageRecord {
+  scope_type: string;
+  scope_id: string;
+  resource_type: string;
+  bucket: string;
+  window_start: string;
+  counter: number;
+}

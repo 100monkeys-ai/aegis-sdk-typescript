@@ -80,10 +80,45 @@ env:
 ```typescript
 class AegisClient {
   constructor(baseUrl: string, apiKey?: string)
+
+  // Agent Management
   deployAgent(manifest: AgentManifest): Promise<DeploymentResponse>
-  executeTask(agentId: string, input: TaskInput): Promise<TaskOutput>
-  getAgentStatus(agentId: string): Promise<AgentStatus>
+  listAgents(): Promise<AgentInfo[]>
+  getAgent(agentId: string): Promise<AgentManifest>
+  lookupAgent(name: string): Promise<string | null>
   terminateAgent(agentId: string): Promise<void>
+  streamAgentEvents(agentId: string, follow?: boolean): Promise<any>
+  getAgentLogs(agentId: string, limit?: number, offset?: number): Promise<any>
+
+  // Execution Management
+  executeTask(agentId: string, input: TaskInput, options?: { version?: string }): Promise<{ execution_id: string }>
+  getExecution(executionId: string): Promise<ExecutionInfo>
+  cancelExecution(executionId: string): Promise<{ success: boolean }>
+  listExecutions(agentId?: string, limit?: number): Promise<ExecutionInfo[]>
+  deleteExecution(executionId: string): Promise<{ success: boolean }>
+  streamExecutionEvents(executionId: string, follow?: boolean): Promise<any>
+
+  // Workflow Management
+  registerWorkflow(manifest: string | any, force?: boolean): Promise<any>
+  listWorkflows(): Promise<WorkflowInfo[]>
+  getWorkflow(name: string): Promise<string>
+  deleteWorkflow(name: string): Promise<{ success: boolean }>
+  runWorkflow(name: string, input: any, options?: { version?: string }): Promise<WorkflowExecutionInfo>
+  executeTemporalWorkflow(request: StartWorkflowExecutionRequest): Promise<WorkflowExecutionInfo>
+  listWorkflowExecutions(limit?: number, offset?: number): Promise<WorkflowExecutionInfo[]>
+  getWorkflowExecution(executionId: string): Promise<WorkflowExecutionInfo>
+  streamWorkflowLogs(executionId: string): Promise<any>
+  signalWorkflowExecution(executionId: string, responseText: string): Promise<{ status: string; execution_id: string }>
+  cancelWorkflowExecution(executionId: string): Promise<void>
+  removeWorkflowExecution(executionId: string): Promise<void>
+
+  // Platform Services
+  listPendingApprovals(): Promise<{ pending_requests: PendingApproval[]; count: number }>
+  approveRequest(id: string, request?: ApprovalRequest): Promise<{ status: string; request_id: string }>
+  rejectRequest(id: string, request: RejectionRequest): Promise<{ status: string; request_id: string }>
+  dispatchGateway(payload: any): Promise<any>
+  attestSmcp(request: AttestationRequest): Promise<{ security_token: string }>
+  invokeSmcp(envelope: SmcpEnvelope): Promise<any>
 }
 ```
 

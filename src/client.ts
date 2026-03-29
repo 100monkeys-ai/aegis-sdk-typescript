@@ -1,19 +1,17 @@
 import axios, { AxiosInstance } from 'axios';
 import {
-  TaskInput,
-  AgentInfo,
-  DeploymentResponse,
-  ExecutionInfo,
-  WorkflowInfo,
-  WorkflowExecutionInfo,
-  PendingApproval,
-  StartWorkflowExecutionRequest,
   ApprovalRequest,
+  ApprovalResponse,
+  PendingApproval,
+  RateLimitOverride,
   RejectionRequest,
-  AttestationRequest,
-  SmcpEnvelope,
+  SmcpAttestationResponse,
+  SmcpToolsResponse,
+  StartExecutionResponse,
+  Tenant,
+  UsageRecord,
+  WorkflowExecutionLogs,
 } from './types';
-import { AgentManifest } from './manifest';
 
 /**
  * Client for interacting with the AEGIS orchestrator.
@@ -28,274 +26,298 @@ export class AegisClient {
     });
   }
 
-  // --- Agent Management ---
+  // --- Execution ---
 
   /**
-   * Deploy an agent to the AEGIS cloud.
+   * Start a new execution. POST /v1/executions
    */
-  async deployAgent(manifest: AgentManifest, force: boolean = false): Promise<DeploymentResponse> {
-    const response = await this.client.post('/v1/agents', manifest, {
-      params: { force },
-    });
-    return response.data;
-  }
-
-  /**
-   * List all deployed agents.
-   */
-  async listAgents(): Promise<AgentInfo[]> {
-    const response = await this.client.get('/v1/agents');
-    return response.data;
-  }
-
-  /**
-   * Get an agent's manifest by ID.
-   */
-  async getAgent(agentId: string): Promise<AgentManifest> {
-    const response = await this.client.get(`/v1/agents/${agentId}`);
-    return response.data;
-  }
-
-  /**
-   * Lookup an agent ID by name.
-   */
-  async lookupAgent(name: string): Promise<string | null> {
-    try {
-      const response = await this.client.get(`/v1/agents/lookup/${name}`);
-      return response.data.id;
-    } catch (error: any) {
-      if (error.response && error.response.status === 404) {
-        return null;
-      }
-      throw error;
+  async startExecution(
+    agentId: string,
+    input: string,
+    contextOverrides?: any,
+  ): Promise<StartExecutionResponse> {
+    const payload: any = { agent_id: agentId, input };
+    if (contextOverrides !== undefined) {
+      payload.context_overrides = contextOverrides;
     }
-  }
-
-  /**
-   * Terminate an agent instance.
-   */
-  async terminateAgent(agentId: string): Promise<void> {
-    await this.client.delete(`/v1/agents/${agentId}`);
-  }
-
-  /**
-   * Stream events for an agent.
-   */
-  async streamAgentEvents(agentId: string, follow: boolean = true): Promise<any> {
-    const response = await this.client.get(`/v1/agents/${agentId}/events`, {
-      params: { follow },
-      responseType: 'stream',
-    });
-    return response.data;
-  }
-
-  // --- Execution Management ---
-
-  /**
-   * Execute a task on a deployed agent.
-   */
-  async executeTask(agentId: string, input: TaskInput, options?: { version?: string }): Promise<{ execution_id: string }> {
-    const url = options?.version
-      ? `/v1/agents/${agentId}/execute?version=${options.version}`
-      : `/v1/agents/${agentId}/execute`;
-    const response = await this.client.post(url, input);
+    const response = await this.client.post('/v1/executions', payload);
     return response.data;
   }
 
   /**
-   * Get details of an execution.
+   * Stream SSE events for an execution. GET /v1/executions/{id}/stream
    */
-  async getExecution(executionId: string): Promise<ExecutionInfo> {
-    const response = await this.client.get(`/v1/executions/${executionId}`);
+  async streamExecution(executionId: string, token?: string): Promise<any> {
+    const response = await this.client.get(
+      `/v1/executions/${executionId}/stream`,
+      {
+        params: token ? { token } : {},
+        responseType: 'stream',
+      },
+    );
     return response.data;
   }
 
-  /**
-   * Cancel a running execution.
-   */
-  async cancelExecution(executionId: string): Promise<{ success: boolean }> {
-    const response = await this.client.post(`/v1/executions/${executionId}/cancel`);
-    return response.data;
-  }
+  // --- Human Approvals ---
 
   /**
-   * List executions.
+   * List pending approval requests. GET /v1/human-approvals
    */
-  async listExecutions(agentId?: string, limit?: number): Promise<ExecutionInfo[]> {
-    const response = await this.client.get('/v1/executions', {
-      params: { agent_id: agentId, limit },
-    });
-    return response.data;
-  }
-
-  /**
-   * Delete an execution record.
-   */
-  async deleteExecution(executionId: string): Promise<{ success: boolean }> {
-    const response = await this.client.delete(`/v1/executions/${executionId}`);
-    return response.data;
-  }
-
-  /**
-   * Stream events for an execution.
-   */
-  async streamExecutionEvents(executionId: string, follow: boolean = true): Promise<any> {
-    const response = await this.client.get(`/v1/executions/${executionId}/events`, {
-      params: { follow },
-      responseType: 'stream',
-    });
-    return response.data;
-  }
-
-  // --- Workflow Management ---
-
-  /**
-   * Register a new workflow.
-   */
-  async registerWorkflow(manifest: string | any, force: boolean = false): Promise<any> {
-    const response = await this.client.post('/v1/workflows', manifest, {
-      params: { force },
-    });
-    return response.data;
-  }
-
-  /**
-   * List all workflows.
-   */
-  async listWorkflows(): Promise<WorkflowInfo[]> {
-    const response = await this.client.get('/v1/workflows');
-    return response.data;
-  }
-
-  /**
-   * Get workflow manifest (YAML).
-   */
-  async getWorkflow(name: string): Promise<string> {
-    const response = await this.client.get(`/v1/workflows/${name}`);
-    return response.data;
-  }
-
-  /**
-   * Delete a workflow.
-   */
-  async deleteWorkflow(name: string): Promise<{ success: boolean }> {
-    const response = await this.client.delete(`/v1/workflows/${name}`);
-    return response.data;
-  }
-
-  /**
-   * Run a workflow.
-   */
-  async runWorkflow(name: string, input: any, options?: { version?: string }): Promise<WorkflowExecutionInfo> {
-    const url = options?.version
-      ? `/v1/workflows/${name}/run?version=${options.version}`
-      : `/v1/workflows/${name}/run`;
-    const body = options?.version ? { input, version: options.version } : { input };
-    const response = await this.client.post(url, body);
-    return response.data;
-  }
-
-  /**
-   * Execute a Temporal workflow.
-   */
-  async executeTemporalWorkflow(request: StartWorkflowExecutionRequest): Promise<WorkflowExecutionInfo> {
-    const response = await this.client.post('/v1/workflows/temporal/execute', request);
-    return response.data;
-  }
-
-  /**
-   * List workflow executions.
-   */
-  async listWorkflowExecutions(limit?: number, offset?: number): Promise<WorkflowExecutionInfo[]> {
-    const response = await this.client.get('/v1/workflows/executions', {
-      params: { limit, offset },
-    });
-    return response.data;
-  }
-
-  /**
-   * Get workflow execution details.
-   */
-  async getWorkflowExecution(executionId: string): Promise<WorkflowExecutionInfo> {
-    const response = await this.client.get(`/v1/workflows/executions/${executionId}`);
-    return response.data;
-  }
-
-  /**
-   * Stream workflow logs.
-   */
-  async streamWorkflowLogs(executionId: string): Promise<any> {
-    const response = await this.client.get(`/v1/workflows/executions/${executionId}/logs`, {
-      responseType: 'stream',
-    });
-    return response.data;
-  }
-
-  /**
-   * Signal a workflow execution.
-   */
-  async signalWorkflowExecution(executionId: string, responseText: string): Promise<{ status: string; execution_id: string }> {
-    const response = await this.client.post(`/v1/workflows/executions/${executionId}/signal`, {
-      response: responseText,
-    });
-    return response.data;
-  }
-
-  // --- Platform Services ---
-
-  /**
-   * List pending human approval requests.
-   */
-  async listPendingApprovals(): Promise<{ pending_requests: PendingApproval[]; count: number }> {
+  async listPendingApprovals(): Promise<{
+    pending_requests: PendingApproval[];
+    count: number;
+  }> {
     const response = await this.client.get('/v1/human-approvals');
     return response.data;
   }
 
   /**
-   * Get a specific pending approval request.
+   * Get a specific pending approval. GET /v1/human-approvals/{id}
    */
-  async getPendingApproval(id: string): Promise<{ request: PendingApproval }> {
+  async getPendingApproval(
+    id: string,
+  ): Promise<{ request: PendingApproval }> {
     const response = await this.client.get(`/v1/human-approvals/${id}`);
     return response.data;
   }
 
   /**
-   * Approve a request.
+   * Approve a pending request. POST /v1/human-approvals/{id}/approve
    */
-  async approveRequest(id: string, request: ApprovalRequest = {}): Promise<{ status: string; request_id: string }> {
-    const response = await this.client.post(`/v1/human-approvals/${id}/approve`, request);
+  async approveRequest(
+    id: string,
+    request: ApprovalRequest = {},
+  ): Promise<ApprovalResponse> {
+    const response = await this.client.post(
+      `/v1/human-approvals/${id}/approve`,
+      request,
+    );
     return response.data;
   }
 
   /**
-   * Reject a request.
+   * Reject a pending request. POST /v1/human-approvals/{id}/reject
    */
-  async rejectRequest(id: string, request: RejectionRequest): Promise<{ status: string; request_id: string }> {
-    const response = await this.client.post(`/v1/human-approvals/${id}/reject`, request);
+  async rejectRequest(
+    id: string,
+    request: RejectionRequest,
+  ): Promise<ApprovalResponse> {
+    const response = await this.client.post(
+      `/v1/human-approvals/${id}/reject`,
+      request,
+    );
+    return response.data;
+  }
+
+  // --- SMCP ---
+
+  /**
+   * Attest an SMCP security token. POST /v1/smcp/attest
+   */
+  async attestSmcp(payload: any): Promise<SmcpAttestationResponse> {
+    const response = await this.client.post('/v1/smcp/attest', payload);
     return response.data;
   }
 
   /**
-   * Dispatch a message to the gateway.
+   * Invoke an SMCP tool. POST /v1/smcp/invoke
+   */
+  async invokeSmcp(payload: any): Promise<any> {
+    const response = await this.client.post('/v1/smcp/invoke', payload);
+    return response.data;
+  }
+
+  /**
+   * List available SMCP tools. GET /v1/smcp/tools
+   */
+  async listSmcpTools(securityContext?: string): Promise<SmcpToolsResponse> {
+    const params: any = {};
+    const headers: any = {};
+    if (securityContext) {
+      params.security_context = securityContext;
+      headers['X-Zaru-Security-Context'] = securityContext;
+    }
+    const response = await this.client.get('/v1/smcp/tools', {
+      params,
+      headers,
+    });
+    return response.data;
+  }
+
+  // --- Dispatch Gateway ---
+
+  /**
+   * Dispatch a message to the inner loop gateway. POST /v1/dispatch-gateway
    */
   async dispatchGateway(payload: any): Promise<any> {
     const response = await this.client.post('/v1/dispatch-gateway', payload);
     return response.data;
   }
 
+  // --- Stimulus ---
+
   /**
-   * Attest SMCP.
+   * Ingest an external stimulus. POST /v1/stimuli
    */
-  async attestSmcp(request: AttestationRequest): Promise<{ security_token: string }> {
-    const response = await this.client.post('/v1/smcp/attest', request);
+  async ingestStimulus(payload: any): Promise<any> {
+    const response = await this.client.post('/v1/stimuli', payload);
     return response.data;
   }
 
   /**
-   * Invoke SMCP.
+   * Send a webhook event. POST /v1/webhooks/{source}
    */
-  async invokeSmcp(envelope: SmcpEnvelope): Promise<any> {
-    const response = await this.client.post('/v1/smcp/invoke', envelope);
+  async sendWebhook(source: string, payload: any): Promise<any> {
+    const response = await this.client.post(
+      `/v1/webhooks/${source}`,
+      payload,
+    );
+    return response.data;
+  }
+
+  // --- Workflow Logs ---
+
+  /**
+   * Get workflow execution logs. GET /v1/workflows/executions/{id}/logs
+   */
+  async getWorkflowExecutionLogs(
+    executionId: string,
+    limit?: number,
+    offset?: number,
+  ): Promise<WorkflowExecutionLogs> {
+    const response = await this.client.get(
+      `/v1/workflows/executions/${executionId}/logs`,
+      { params: { limit, offset } },
+    );
+    return response.data;
+  }
+
+  /**
+   * Stream workflow execution logs via SSE. GET /v1/workflows/executions/{id}/logs/stream
+   */
+  async streamWorkflowExecutionLogs(executionId: string): Promise<any> {
+    const response = await this.client.get(
+      `/v1/workflows/executions/${executionId}/logs/stream`,
+      { responseType: 'stream' },
+    );
+    return response.data;
+  }
+
+  // --- Admin: Tenant Management ---
+
+  /**
+   * Create a new tenant. POST /v1/admin/tenants
+   */
+  async createTenant(
+    slug: string,
+    displayName: string,
+    tier: string = 'enterprise',
+  ): Promise<Tenant> {
+    const response = await this.client.post('/v1/admin/tenants', {
+      slug,
+      display_name: displayName,
+      tier,
+    });
+    return response.data;
+  }
+
+  /**
+   * List all tenants. GET /v1/admin/tenants
+   */
+  async listTenants(): Promise<{ tenants: Tenant[]; count: number }> {
+    const response = await this.client.get('/v1/admin/tenants');
+    return response.data;
+  }
+
+  /**
+   * Suspend a tenant. POST /v1/admin/tenants/{slug}/suspend
+   */
+  async suspendTenant(
+    slug: string,
+  ): Promise<{ status: string; slug: string }> {
+    const response = await this.client.post(
+      `/v1/admin/tenants/${slug}/suspend`,
+    );
+    return response.data;
+  }
+
+  /**
+   * Soft-delete a tenant. DELETE /v1/admin/tenants/{slug}
+   */
+  async deleteTenant(
+    slug: string,
+  ): Promise<{ status: string; slug: string }> {
+    const response = await this.client.delete(`/v1/admin/tenants/${slug}`);
+    return response.data;
+  }
+
+  // --- Admin: Rate Limits ---
+
+  /**
+   * List rate limit overrides. GET /v1/admin/rate-limits/overrides
+   */
+  async listRateLimitOverrides(
+    tenantId?: string,
+    userId?: string,
+  ): Promise<{ overrides: RateLimitOverride[]; count: number }> {
+    const response = await this.client.get(
+      '/v1/admin/rate-limits/overrides',
+      { params: { tenant_id: tenantId, user_id: userId } },
+    );
+    return response.data;
+  }
+
+  /**
+   * Create or update a rate limit override. POST /v1/admin/rate-limits/overrides
+   */
+  async createRateLimitOverride(payload: any): Promise<RateLimitOverride> {
+    const response = await this.client.post(
+      '/v1/admin/rate-limits/overrides',
+      payload,
+    );
+    return response.data;
+  }
+
+  /**
+   * Delete a rate limit override. DELETE /v1/admin/rate-limits/overrides/{id}
+   */
+  async deleteRateLimitOverride(
+    overrideId: string,
+  ): Promise<{ status: string; id: string }> {
+    const response = await this.client.delete(
+      `/v1/admin/rate-limits/overrides/${overrideId}`,
+    );
+    return response.data;
+  }
+
+  /**
+   * Get rate limit usage. GET /v1/admin/rate-limits/usage
+   */
+  async getRateLimitUsage(
+    scopeType: string,
+    scopeId: string,
+  ): Promise<{ usage: UsageRecord[]; count: number }> {
+    const response = await this.client.get('/v1/admin/rate-limits/usage', {
+      params: { scope_type: scopeType, scope_id: scopeId },
+    });
+    return response.data;
+  }
+
+  // --- Health ---
+
+  /**
+   * Liveness check. GET /health/live
+   */
+  async healthLive(): Promise<{ status: string }> {
+    const response = await this.client.get('/health/live');
+    return response.data;
+  }
+
+  /**
+   * Readiness check. GET /health/ready
+   */
+  async healthReady(): Promise<{ status: string }> {
+    const response = await this.client.get('/health/ready');
     return response.data;
   }
 }
