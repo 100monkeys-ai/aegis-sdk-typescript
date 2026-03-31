@@ -58,6 +58,8 @@ export interface ManifestMetadata {
   version: string;
   /** Human-readable description */
   description?: string;
+  /** Categorization tags */
+  tags?: string[];
   /** Key-value labels for categorization */
   labels?: Record<string, string>;
   /** Non-identifying metadata */
