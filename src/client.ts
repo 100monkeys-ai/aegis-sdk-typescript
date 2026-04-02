@@ -5,8 +5,8 @@ import {
   PendingApproval,
   RateLimitOverride,
   RejectionRequest,
-  SmcpAttestationResponse,
-  SmcpToolsResponse,
+  SealAttestationResponse,
+  SealToolsResponse,
   StartExecutionResponse,
   Tenant,
   UsageRecord,
@@ -109,35 +109,35 @@ export class AegisClient {
     return response.data;
   }
 
-  // --- SMCP ---
+  // --- SEAL ---
 
   /**
-   * Attest an SMCP security token. POST /v1/smcp/attest
+   * Attest a SEAL security token. POST /v1/seal/attest
    */
-  async attestSmcp(payload: any): Promise<SmcpAttestationResponse> {
-    const response = await this.client.post('/v1/smcp/attest', payload);
+  async attestSeal(payload: any): Promise<SealAttestationResponse> {
+    const response = await this.client.post('/v1/seal/attest', payload);
     return response.data;
   }
 
   /**
-   * Invoke an SMCP tool. POST /v1/smcp/invoke
+   * Invoke a SEAL tool. POST /v1/seal/invoke
    */
-  async invokeSmcp(payload: any): Promise<any> {
-    const response = await this.client.post('/v1/smcp/invoke', payload);
+  async invokeSeal(payload: any): Promise<any> {
+    const response = await this.client.post('/v1/seal/invoke', payload);
     return response.data;
   }
 
   /**
-   * List available SMCP tools. GET /v1/smcp/tools
+   * List available SEAL tools. GET /v1/seal/tools
    */
-  async listSmcpTools(securityContext?: string): Promise<SmcpToolsResponse> {
+  async listSealTools(securityContext?: string): Promise<SealToolsResponse> {
     const params: any = {};
     const headers: any = {};
     if (securityContext) {
       params.security_context = securityContext;
       headers['X-Zaru-Security-Context'] = securityContext;
     }
-    const response = await this.client.get('/v1/smcp/tools', {
+    const response = await this.client.get('/v1/seal/tools', {
       params,
       headers,
     });

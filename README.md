@@ -88,10 +88,10 @@ class AegisClient {
   approveRequest(id: string, request?: ApprovalRequest): Promise<ApprovalResponse>
   rejectRequest(id: string, request: RejectionRequest): Promise<ApprovalResponse>
 
-  // SMCP
-  attestSmcp(payload: any): Promise<SmcpAttestationResponse>
-  invokeSmcp(payload: any): Promise<any>
-  listSmcpTools(securityContext?: string): Promise<SmcpToolsResponse>
+  // SEAL
+  attestSeal(payload: any): Promise<SealAttestationResponse>
+  invokeSeal(payload: any): Promise<any>
+  listSealTools(securityContext?: string): Promise<SealToolsResponse>
 
   // Dispatch Gateway
   dispatchGateway(payload: any): Promise<any>
@@ -151,11 +151,11 @@ interface ApprovalResponse {
   status: string;
 }
 
-interface SmcpAttestationResponse {
+interface SealAttestationResponse {
   security_token: string;
 }
 
-interface SmcpToolsResponse {
+interface SealToolsResponse {
   protocol: string;
   attestation_endpoint: string;
   invoke_endpoint: string;

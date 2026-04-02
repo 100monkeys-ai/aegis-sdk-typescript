@@ -43,9 +43,9 @@ export interface ApprovalResponse {
   status: string;
 }
 
-// --- SMCP ---
+// --- SEAL ---
 
-export interface SmcpAttestationRequest {
+export interface SealAttestationRequest {
   agent_public_key: string;
   container_id?: string;
   agent_id?: string;
@@ -58,11 +58,11 @@ export interface SmcpAttestationRequest {
   tenant_id?: string;
 }
 
-export interface SmcpAttestationResponse {
+export interface SealAttestationResponse {
   security_token: string;
 }
 
-export interface SmcpToolInvokeRequest {
+export interface SealToolInvokeRequest {
   security_token: string;
   signature: string;
   payload: any;
@@ -70,7 +70,7 @@ export interface SmcpToolInvokeRequest {
   timestamp?: string;
 }
 
-export interface SmcpToolsResponse {
+export interface SealToolsResponse {
   protocol: string;
   attestation_endpoint: string;
   invoke_endpoint: string;

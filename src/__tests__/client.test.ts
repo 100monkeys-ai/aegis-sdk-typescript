@@ -110,30 +110,30 @@ describe('AegisClient', () => {
     });
   });
 
-  describe('attestSmcp', () => {
-    it('posts to /v1/smcp/attest', async () => {
+  describe('attestSeal', () => {
+    it('posts to /v1/seal/attest', async () => {
       mockAxiosInstance.post.mockResolvedValue({
         data: { security_token: 'jwt-token' },
       });
 
-      const result = await client.attestSmcp({ agent_public_key: 'key123' });
+      const result = await client.attestSeal({ agent_public_key: 'key123' });
       expect(result.security_token).toBe('jwt-token');
     });
   });
 
-  describe('listSmcpTools', () => {
-    it('gets /v1/smcp/tools', async () => {
+  describe('listSealTools', () => {
+    it('gets /v1/seal/tools', async () => {
       mockAxiosInstance.get.mockResolvedValue({
         data: {
-          protocol: 'smcp/v1',
-          attestation_endpoint: '/v1/smcp/attest',
-          invoke_endpoint: '/v1/smcp/invoke',
+          protocol: 'seal/v1',
+          attestation_endpoint: '/v1/seal/attest',
+          invoke_endpoint: '/v1/seal/invoke',
           tools: [{ name: 'tool1' }],
         },
       });
 
-      const result = await client.listSmcpTools();
-      expect(result.protocol).toBe('smcp/v1');
+      const result = await client.listSealTools();
+      expect(result.protocol).toBe('seal/v1');
       expect(result.tools).toHaveLength(1);
     });
   });
