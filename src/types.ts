@@ -59,7 +59,10 @@ export interface SealAttestationRequest {
 }
 
 export interface SealAttestationResponse {
+  status: string;
   security_token: string;
+  expires_at: string;
+  session_id?: string;
 }
 
 export interface SealToolInvokeRequest {

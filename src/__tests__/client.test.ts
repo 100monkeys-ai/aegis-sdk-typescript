@@ -113,11 +113,19 @@ describe('AegisClient', () => {
   describe('attestSeal', () => {
     it('posts to /v1/seal/attest', async () => {
       mockAxiosInstance.post.mockResolvedValue({
-        data: { security_token: 'jwt-token' },
+        data: {
+          status: 'success',
+          security_token: 'jwt-token',
+          expires_at: '2026-04-01T12:00:00Z',
+          session_id: 'sess-abc',
+        },
       });
 
       const result = await client.attestSeal({ agent_public_key: 'key123' });
+      expect(result.status).toBe('success');
       expect(result.security_token).toBe('jwt-token');
+      expect(result.expires_at).toBe('2026-04-01T12:00:00Z');
+      expect(result.session_id).toBe('sess-abc');
     });
   });
 
