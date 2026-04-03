@@ -77,6 +77,8 @@ export interface AgentSpec {
   tools?: string[];
   env?: Record<string, string>;
   advanced?: AdvancedConfig;
+  /** Optional JSON Schema describing execution inputs. */
+  input_schema?: Record<string, unknown>;
 }
 
 /**
