@@ -69,8 +69,8 @@ export interface SealToolInvokeRequest {
   security_token: string;
   signature: string;
   payload: any;
-  protocol?: string;
-  timestamp?: string;
+  protocol: string;
+  timestamp: string;
 }
 
 export interface SealToolsResponse {

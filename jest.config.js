@@ -6,4 +6,5 @@ module.exports = {
   transform: {
     '^.+\.tsx?$': ['@swc/jest'],
   },
+  forceExit: true,
 };
