@@ -34,12 +34,12 @@ export class AegisClient {
   async startExecution(
     agentId: string,
     input: string,
+    intent?: string,
     contextOverrides?: any,
   ): Promise<StartExecutionResponse> {
     const payload: any = { agent_id: agentId, input };
-    if (contextOverrides !== undefined) {
-      payload.context_overrides = contextOverrides;
-    }
+    if (intent !== undefined) payload.intent = intent;
+    if (contextOverrides !== undefined) payload.context_overrides = contextOverrides;
     const response = await this.client.post('/v1/executions', payload);
     return response.data;
   }

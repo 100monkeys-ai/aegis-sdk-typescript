@@ -7,6 +7,7 @@
 export interface StartExecutionRequest {
   agent_id: string;
   input: string;
+  intent?: string;
   context_overrides?: any;
 }
 
