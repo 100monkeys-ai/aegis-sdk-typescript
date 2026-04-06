@@ -1,6 +1,7 @@
 # AEGIS TypeScript SDK
 
-Official TypeScript/JavaScript SDK for building secure, autonomous agents with the AEGIS runtime.
+Official TypeScript/JavaScript SDK for building secure, autonomous agents with the
+AEGIS runtime.
 
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL%203.0-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/typescript-5.3%2B-blue.svg)](https://www.typescriptlang.org/)
@@ -19,8 +20,14 @@ npm install @100monkeys-ai/aegis-sdk
 import { AegisClient } from '@100monkeys-ai/aegis-sdk';
 
 async function main() {
-  // Create a client
-  const client = new AegisClient('https://api.100monkeys.ai', 'your-api-key');
+  // Create a client — token acquisition and refresh are handled automatically
+  const client = new AegisClient({
+    baseUrl: 'https://your-orchestrator.example.com',
+    keycloakUrl: 'https://auth.example.com',
+    realm: 'aegis-system',
+    clientId: 'your-client-id',
+    clientSecret: 'your-client-secret',
+  });
 
   // Start an execution
   const { execution_id } = await client.startExecution(
@@ -41,6 +48,8 @@ main();
 
 - **Type-safe API**: Full TypeScript type definitions
 - **Promise-based**: Modern async/await interface
+- **OAuth2 Client Credentials**: Automatic token acquisition and refresh via
+  axios interceptor
 - **Manifest validation**: Runtime validation of agent configurations
 - **Minimal dependencies**: Lightweight footprint with only essential packages
 
@@ -72,14 +81,32 @@ env:
 
 ## API Reference
 
+### AegisClientOptions
+
+```typescript
+interface AegisClientOptions {
+  baseUrl: string;
+  keycloakUrl: string;
+  realm: string;
+  clientId: string;
+  clientSecret: string;
+  tokenRefreshBufferSecs?: number; // default: 30
+}
+```
+
 ### AegisClient
+
+The client authenticates using OAuth2 Client Credentials. On each request, an axios
+interceptor calls Keycloak to obtain a bearer token (or reuses a cached one) and
+attaches it as an `Authorization: Bearer <token>` header. Tokens are proactively
+refreshed `tokenRefreshBufferSecs` before expiry.
 
 ```typescript
 class AegisClient {
-  constructor(baseUrl: string, apiKey?: string)
+  constructor(options: AegisClientOptions)
 
   // Execution
-  startExecution(agentId: string, input: string, contextOverrides?: any): Promise<StartExecutionResponse>
+  startExecution(agentId: string, input: string, contextOverrides?: any, intent?: string): Promise<StartExecutionResponse>
   streamExecution(executionId: string, token?: string): Promise<any>
 
   // Human Approvals
@@ -208,7 +235,8 @@ interface UsageRecord {
 
 ## Examples
 
-See the [examples repository](https://github.com/100monkeys-ai/aegis-examples) for complete examples:
+See the [examples repository](https://github.com/100monkeys-ai/aegis-examples) for
+complete examples:
 
 - Email Summarizer
 - Web Researcher
@@ -260,8 +288,10 @@ GNU Affero General Public License v3.0 - See [LICENSE](LICENSE) for details.
 
 ## Related Repositories
 
-- [aegis-orchestrator](https://github.com/100monkeys-ai/aegis-orchestrator) - Core runtime
-- [aegis-sdk-python](https://github.com/100monkeys-ai/aegis-sdk-python) - Python SDK
+- [aegis-orchestrator](https://github.com/100monkeys-ai/aegis-orchestrator) -
+  Core runtime
+- [aegis-sdk-python](https://github.com/100monkeys-ai/aegis-sdk-python) -
+  Python SDK
 - [aegis-examples](https://github.com/100monkeys-ai/aegis-examples) - Example agents
 
 ---
