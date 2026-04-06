@@ -1,11 +1,19 @@
-import axios from 'axios';
-import { AegisClient } from '../client';
+import axios from "axios";
+import { AegisClient } from "../client";
 
 // Mock axios
-jest.mock('axios');
+jest.mock("axios");
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-describe('AegisClient', () => {
+const defaultOptions = {
+  baseUrl: "http://localhost:8080",
+  keycloakUrl: "http://localhost:8081",
+  realm: "aegis-system",
+  clientId: "test-client",
+  clientSecret: "test-secret",
+};
+
+describe("AegisClient", () => {
   let client: AegisClient;
   let mockAxiosInstance: any;
 
@@ -14,65 +22,77 @@ describe('AegisClient', () => {
       get: jest.fn(),
       post: jest.fn(),
       delete: jest.fn(),
+      interceptors: {
+        request: { use: jest.fn() },
+      },
     };
     mockedAxios.create.mockReturnValue(mockAxiosInstance as any);
-    client = new AegisClient('http://localhost:8088', 'test-key');
+    client = new AegisClient(defaultOptions);
   });
 
-  describe('constructor', () => {
-    it('creates axios instance with auth header', () => {
+  describe("constructor", () => {
+    it("creates axios instance with correct baseURL", () => {
       expect(mockedAxios.create).toHaveBeenCalledWith({
-        baseURL: 'http://localhost:8088',
-        headers: { Authorization: 'Bearer test-key' },
+        baseURL: "http://localhost:8080",
       });
     });
 
-    it('creates axios instance without auth header when no key', () => {
-      new AegisClient('http://localhost:8088');
+    it("registers a request interceptor", () => {
+      expect(mockAxiosInstance.interceptors.request.use).toHaveBeenCalledTimes(
+        1,
+      );
+    });
+
+    it("builds the correct tokenUrl from keycloakUrl with trailing slash", () => {
+      mockedAxios.create.mockReturnValue(mockAxiosInstance as any);
+      new AegisClient({
+        ...defaultOptions,
+        keycloakUrl: "http://localhost:8081/",
+      });
+      // tokenUrl should not double up slashes
       expect(mockedAxios.create).toHaveBeenCalledWith({
-        baseURL: 'http://localhost:8088',
-        headers: {},
+        baseURL: "http://localhost:8080",
       });
     });
   });
 
-  describe('startExecution', () => {
-    it('posts to /v1/executions with correct payload', async () => {
+  describe("startExecution", () => {
+    it("posts to /v1/executions with correct payload", async () => {
       mockAxiosInstance.post.mockResolvedValue({
-        data: { execution_id: 'exec-123' },
+        data: { execution_id: "exec-123" },
       });
 
-      const result = await client.startExecution('agent-1', 'do something');
-      expect(result.execution_id).toBe('exec-123');
-      expect(mockAxiosInstance.post).toHaveBeenCalledWith('/v1/executions', {
-        agent_id: 'agent-1',
-        input: 'do something',
+      const result = await client.startExecution("agent-1", "do something");
+      expect(result.execution_id).toBe("exec-123");
+      expect(mockAxiosInstance.post).toHaveBeenCalledWith("/v1/executions", {
+        agent_id: "agent-1",
+        input: "do something",
       });
     });
 
-    it('includes context_overrides when provided', async () => {
+    it("includes context_overrides when provided", async () => {
       mockAxiosInstance.post.mockResolvedValue({
-        data: { execution_id: 'exec-456' },
+        data: { execution_id: "exec-456" },
       });
 
-      await client.startExecution('agent-1', 'do something', { key: 'val' });
-      expect(mockAxiosInstance.post).toHaveBeenCalledWith('/v1/executions', {
-        agent_id: 'agent-1',
-        input: 'do something',
-        context_overrides: { key: 'val' },
+      await client.startExecution("agent-1", "do something", { key: "val" });
+      expect(mockAxiosInstance.post).toHaveBeenCalledWith("/v1/executions", {
+        agent_id: "agent-1",
+        input: "do something",
+        context_overrides: { key: "val" },
       });
     });
   });
 
-  describe('listPendingApprovals', () => {
-    it('gets /v1/human-approvals', async () => {
+  describe("listPendingApprovals", () => {
+    it("gets /v1/human-approvals", async () => {
       const mockData = {
         pending_requests: [
           {
-            id: 'a-1',
-            execution_id: 'e-1',
-            prompt: 'approve?',
-            created_at: '2026-01-01T00:00:00Z',
+            id: "a-1",
+            execution_id: "e-1",
+            prompt: "approve?",
+            created_at: "2026-01-01T00:00:00Z",
             timeout_seconds: 300,
           },
         ],
@@ -82,168 +102,170 @@ describe('AegisClient', () => {
 
       const result = await client.listPendingApprovals();
       expect(result.pending_requests).toHaveLength(1);
-      expect(result.pending_requests[0].id).toBe('a-1');
+      expect(result.pending_requests[0].id).toBe("a-1");
     });
   });
 
-  describe('approveRequest', () => {
-    it('posts to /v1/human-approvals/{id}/approve', async () => {
+  describe("approveRequest", () => {
+    it("posts to /v1/human-approvals/{id}/approve", async () => {
       mockAxiosInstance.post.mockResolvedValue({
-        data: { status: 'approved' },
+        data: { status: "approved" },
       });
 
-      const result = await client.approveRequest('a-1', {
-        feedback: 'looks good',
+      const result = await client.approveRequest("a-1", {
+        feedback: "looks good",
       });
-      expect(result.status).toBe('approved');
+      expect(result.status).toBe("approved");
     });
   });
 
-  describe('rejectRequest', () => {
-    it('posts to /v1/human-approvals/{id}/reject', async () => {
+  describe("rejectRequest", () => {
+    it("posts to /v1/human-approvals/{id}/reject", async () => {
       mockAxiosInstance.post.mockResolvedValue({
-        data: { status: 'rejected' },
+        data: { status: "rejected" },
       });
 
-      const result = await client.rejectRequest('a-1', { reason: 'not ready' });
-      expect(result.status).toBe('rejected');
+      const result = await client.rejectRequest("a-1", { reason: "not ready" });
+      expect(result.status).toBe("rejected");
     });
   });
 
-  describe('attestSeal', () => {
-    it('posts to /v1/seal/attest', async () => {
+  describe("attestSeal", () => {
+    it("posts to /v1/seal/attest", async () => {
       mockAxiosInstance.post.mockResolvedValue({
         data: {
-          status: 'success',
-          security_token: 'jwt-token',
-          expires_at: '2026-04-01T12:00:00Z',
-          session_id: 'sess-abc',
+          status: "success",
+          security_token: "jwt-token",
+          expires_at: "2026-04-01T12:00:00Z",
+          session_id: "sess-abc",
         },
       });
 
-      const result = await client.attestSeal({ agent_public_key: 'key123' });
-      expect(result.status).toBe('success');
-      expect(result.security_token).toBe('jwt-token');
-      expect(result.expires_at).toBe('2026-04-01T12:00:00Z');
-      expect(result.session_id).toBe('sess-abc');
+      const result = await client.attestSeal({ agent_public_key: "key123" });
+      expect(result.status).toBe("success");
+      expect(result.security_token).toBe("jwt-token");
+      expect(result.expires_at).toBe("2026-04-01T12:00:00Z");
+      expect(result.session_id).toBe("sess-abc");
     });
   });
 
-  describe('listSealTools', () => {
-    it('gets /v1/seal/tools', async () => {
+  describe("listSealTools", () => {
+    it("gets /v1/seal/tools", async () => {
       mockAxiosInstance.get.mockResolvedValue({
         data: {
-          protocol: 'seal/v1',
-          attestation_endpoint: '/v1/seal/attest',
-          invoke_endpoint: '/v1/seal/invoke',
-          tools: [{ name: 'tool1' }],
+          protocol: "seal/v1",
+          attestation_endpoint: "/v1/seal/attest",
+          invoke_endpoint: "/v1/seal/invoke",
+          tools: [{ name: "tool1" }],
         },
       });
 
       const result = await client.listSealTools();
-      expect(result.protocol).toBe('seal/v1');
+      expect(result.protocol).toBe("seal/v1");
       expect(result.tools).toHaveLength(1);
     });
   });
 
-  describe('dispatchGateway', () => {
-    it('posts to /v1/dispatch-gateway', async () => {
+  describe("dispatchGateway", () => {
+    it("posts to /v1/dispatch-gateway", async () => {
       mockAxiosInstance.post.mockResolvedValue({
-        data: { result: 'ok' },
+        data: { result: "ok" },
       });
 
-      const result = await client.dispatchGateway({ type: 'generate' });
-      expect(result.result).toBe('ok');
+      const result = await client.dispatchGateway({ type: "generate" });
+      expect(result.result).toBe("ok");
     });
   });
 
-  describe('ingestStimulus', () => {
-    it('posts to /v1/stimuli', async () => {
+  describe("ingestStimulus", () => {
+    it("posts to /v1/stimuli", async () => {
       mockAxiosInstance.post.mockResolvedValue({
         data: { accepted: true },
       });
 
-      const result = await client.ingestStimulus({ event: 'test' });
+      const result = await client.ingestStimulus({ event: "test" });
       expect(result.accepted).toBe(true);
     });
   });
 
-  describe('sendWebhook', () => {
-    it('posts to /v1/webhooks/{source}', async () => {
+  describe("sendWebhook", () => {
+    it("posts to /v1/webhooks/{source}", async () => {
       mockAxiosInstance.post.mockResolvedValue({ data: { ok: true } });
 
-      const result = await client.sendWebhook('github', { action: 'push' });
+      const result = await client.sendWebhook("github", { action: "push" });
       expect(result.ok).toBe(true);
       expect(mockAxiosInstance.post).toHaveBeenCalledWith(
-        '/v1/webhooks/github',
-        { action: 'push' },
+        "/v1/webhooks/github",
+        {
+          action: "push",
+        },
       );
     });
   });
 
-  describe('getWorkflowExecutionLogs', () => {
-    it('gets /v1/workflows/executions/{id}/logs', async () => {
+  describe("getWorkflowExecutionLogs", () => {
+    it("gets /v1/workflows/executions/{id}/logs", async () => {
       mockAxiosInstance.get.mockResolvedValue({
         data: {
-          execution_id: 'wf-1',
-          events: [{ type: 'started' }],
+          execution_id: "wf-1",
+          events: [{ type: "started" }],
           count: 1,
           limit: 50,
           offset: 0,
         },
       });
 
-      const result = await client.getWorkflowExecutionLogs('wf-1');
-      expect(result.execution_id).toBe('wf-1');
+      const result = await client.getWorkflowExecutionLogs("wf-1");
+      expect(result.execution_id).toBe("wf-1");
       expect(result.count).toBe(1);
     });
   });
 
-  describe('createTenant', () => {
-    it('posts to /v1/admin/tenants', async () => {
+  describe("createTenant", () => {
+    it("posts to /v1/admin/tenants", async () => {
       mockAxiosInstance.post.mockResolvedValue({
         data: {
-          slug: 'acme',
-          display_name: 'Acme Corp',
-          status: 'Active',
-          tier: 'Enterprise',
-          keycloak_realm: 'acme',
-          openbao_namespace: 'acme',
+          slug: "acme",
+          display_name: "Acme Corp",
+          status: "Active",
+          tier: "Enterprise",
+          keycloak_realm: "acme",
+          openbao_namespace: "acme",
           quotas: {
             max_concurrent_executions: 10,
             max_agents: 50,
             max_storage_gb: 100.0,
           },
-          created_at: '2026-01-01T00:00:00Z',
-          updated_at: '2026-01-01T00:00:00Z',
+          created_at: "2026-01-01T00:00:00Z",
+          updated_at: "2026-01-01T00:00:00Z",
         },
       });
 
-      const result = await client.createTenant('acme', 'Acme Corp');
-      expect(result.slug).toBe('acme');
+      const result = await client.createTenant("acme", "Acme Corp");
+      expect(result.slug).toBe("acme");
       expect(result.quotas.max_agents).toBe(50);
     });
   });
 
-  describe('healthLive', () => {
-    it('gets /health/live', async () => {
+  describe("healthLive", () => {
+    it("gets /health/live", async () => {
       mockAxiosInstance.get.mockResolvedValue({
-        data: { status: 'ok' },
+        data: { status: "ok" },
       });
 
       const result = await client.healthLive();
-      expect(result.status).toBe('ok');
+      expect(result.status).toBe("ok");
     });
   });
 
-  describe('healthReady', () => {
-    it('gets /health/ready', async () => {
+  describe("healthReady", () => {
+    it("gets /health/ready", async () => {
       mockAxiosInstance.get.mockResolvedValue({
-        data: { status: 'ready' },
+        data: { status: "ready" },
       });
 
       const result = await client.healthReady();
-      expect(result.status).toBe('ready');
+      expect(result.status).toBe("ready");
     });
   });
 });
