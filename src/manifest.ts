@@ -11,7 +11,7 @@ let stringify: (obj: any) => string;
 
 // Initialize Node.js modules if available
 try {
-  const fs = require('fs');
+  const fs = require("fs");
   readFileSync = fs.readFileSync;
   writeFileSync = fs.writeFileSync;
 } catch (_e) {
@@ -19,7 +19,7 @@ try {
 }
 
 try {
-  const yaml = require('yaml');
+  const yaml = require("yaml");
   parse = yaml.parse;
   stringify = yaml.stringify;
 } catch (_e) {
@@ -41,11 +41,11 @@ export interface AgentManifest {
  */
 export enum ImagePullPolicy {
   /** Always pull from registry, even if cached locally. */
-  Always = 'Always',
+  Always = "Always",
   /** Use local cache if available; pull only if missing (default). */
-  IfNotPresent = 'IfNotPresent',
+  IfNotPresent = "IfNotPresent",
   /** Never pull; use only cached images (fail if missing). */
-  Never = 'Never',
+  Never = "Never",
 }
 
 /**
@@ -58,8 +58,6 @@ export interface ManifestMetadata {
   version: string;
   /** Human-readable description */
   description?: string;
-  /** Categorization tags */
-  tags?: string[];
   /** Key-value labels for categorization */
   labels?: Record<string, string>;
   /** Non-identifying metadata */
@@ -201,7 +199,7 @@ export interface ResourceLimits {
  * Load a manifest from a YAML file.
  */
 export function loadManifest(path: string): AgentManifest {
-  const content = readFileSync(path, 'utf-8');
+  const content = readFileSync(path, "utf-8");
   const manifest = parse(content) as AgentManifest;
   validateManifest(manifest);
   return manifest;
@@ -213,7 +211,7 @@ export function loadManifest(path: string): AgentManifest {
 export function saveManifest(manifest: AgentManifest, path: string): void {
   validateManifest(manifest);
   const yaml = stringify(manifest);
-  writeFileSync(path, yaml, 'utf-8');
+  writeFileSync(path, yaml, "utf-8");
 }
 
 /**
@@ -221,22 +219,26 @@ export function saveManifest(manifest: AgentManifest, path: string): void {
  */
 export function validateManifest(manifest: AgentManifest): void {
   // Validate API version
-  if (manifest.apiVersion !== '100monkeys.ai/v1') {
-    throw new Error(`Invalid apiVersion: expected '100monkeys.ai/v1', got '${manifest.apiVersion}'`);
+  if (manifest.apiVersion !== "100monkeys.ai/v1") {
+    throw new Error(
+      `Invalid apiVersion: expected '100monkeys.ai/v1', got '${manifest.apiVersion}'`,
+    );
   }
-  
+
   // Validate kind
-  if (manifest.kind !== 'Agent') {
+  if (manifest.kind !== "Agent") {
     throw new Error(`Invalid kind: expected 'Agent', got '${manifest.kind}'`);
   }
-  
+
   // Validate name format (DNS label)
   const name = manifest.metadata.name;
   const dnsLabelRegex = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?$/;
   if (!dnsLabelRegex.test(name)) {
-    throw new Error(`Invalid metadata.name: '${name}' must be lowercase alphanumeric with hyphens`);
+    throw new Error(
+      `Invalid metadata.name: '${name}' must be lowercase alphanumeric with hyphens`,
+    );
   }
-  
+
   // Validate runtime configuration (mutual exclusion)
   validateRuntimeConfig(manifest.spec.runtime);
 }
@@ -249,22 +251,28 @@ export function validateRuntimeConfig(runtime: RuntimeConfig): void {
   const hasLanguageOnly = runtime.language && !runtime.version;
   const hasVersionOnly = runtime.version && !runtime.language;
   const hasCustom = runtime.image;
-  
+
   if (hasLanguageOnly) {
-    throw new Error('language requires version to be specified');
+    throw new Error("language requires version to be specified");
   }
   if (hasVersionOnly) {
-    throw new Error('version requires language to be specified');
+    throw new Error("version requires language to be specified");
   }
   if (hasStandard && hasCustom) {
-    throw new Error('cannot specify both image and language+version (mutually exclusive)');
+    throw new Error(
+      "cannot specify both image and language+version (mutually exclusive)",
+    );
   }
   if (!hasStandard && !hasCustom) {
-    throw new Error('must specify either standard runtime (language+version) or custom runtime (image)');
+    throw new Error(
+      "must specify either standard runtime (language+version) or custom runtime (image)",
+    );
   }
-  
-  if (hasCustom && runtime.image && !runtime.image.includes('/')) {
-    throw new Error('image must be fully-qualified: registry/repo:tag (e.g., ghcr.io/org/image:v1.0)');
+
+  if (hasCustom && runtime.image && !runtime.image.includes("/")) {
+    throw new Error(
+      "image must be fully-qualified: registry/repo:tag (e.g., ghcr.io/org/image:v1.0)",
+    );
   }
 }
 
@@ -277,31 +285,31 @@ export function validateRuntimeConfig(runtime: RuntimeConfig): void {
  */
 export class AgentManifestBuilder {
   private manifest: AgentManifest;
-  
+
   constructor(name: string, language?: string, version?: string) {
     this.manifest = {
-      apiVersion: '100monkeys.ai/v1',
-      kind: 'Agent',
+      apiVersion: "100monkeys.ai/v1",
+      kind: "Agent",
       metadata: {
         name,
-        version: '1.0.0',
+        version: "1.0.0",
       },
       spec: {
         runtime: {
           language,
           version,
-          isolation: 'inherit',
+          isolation: "inherit",
           image_pull_policy: ImagePullPolicy.IfNotPresent,
         },
       },
     };
   }
-  
+
   withDescription(description: string): this {
     this.manifest.metadata.description = description;
     return this;
   }
-  
+
   withLabel(key: string, value: string): this {
     if (!this.manifest.metadata.labels) {
       this.manifest.metadata.labels = {};
@@ -309,7 +317,7 @@ export class AgentManifestBuilder {
     this.manifest.metadata.labels[key] = value;
     return this;
   }
-  
+
   withInstruction(instruction: string): this {
     if (!this.manifest.spec.task) {
       this.manifest.spec.task = {};
@@ -317,7 +325,7 @@ export class AgentManifestBuilder {
     this.manifest.spec.task.instruction = instruction;
     return this;
   }
-  
+
   withExecutionMode(mode: string, maxIterations: number = 10): this {
     if (!this.manifest.spec.execution) {
       this.manifest.spec.execution = {};
@@ -326,17 +334,17 @@ export class AgentManifestBuilder {
     this.manifest.spec.execution.max_iterations = maxIterations;
     return this;
   }
-  
+
   withImage(image: string): this {
     this.manifest.spec.runtime.image = image;
     return this;
   }
-  
+
   withImagePullPolicy(policy: ImagePullPolicy): this {
     this.manifest.spec.runtime.image_pull_policy = policy;
     return this;
   }
-  
+
   withBootstrapPath(path: string): this {
     if (!this.manifest.spec.advanced) {
       this.manifest.spec.advanced = {};
@@ -344,7 +352,7 @@ export class AgentManifestBuilder {
     this.manifest.spec.advanced.bootstrap_path = path;
     return this;
   }
-  
+
   withNetworkAllow(domains: string[]): this {
     if (!this.manifest.spec.security) {
       this.manifest.spec.security = {};
@@ -352,11 +360,11 @@ export class AgentManifestBuilder {
     if (!this.manifest.spec.security.network) {
       this.manifest.spec.security.network = {};
     }
-    this.manifest.spec.security.network.mode = 'allow';
+    this.manifest.spec.security.network.mode = "allow";
     this.manifest.spec.security.network.allowlist = domains;
     return this;
   }
-  
+
   withTool(tool: string): this {
     if (!this.manifest.spec.tools) {
       this.manifest.spec.tools = [];
@@ -364,7 +372,7 @@ export class AgentManifestBuilder {
     this.manifest.spec.tools.push(tool);
     return this;
   }
-  
+
   withEnv(key: string, value: string): this {
     if (!this.manifest.spec.env) {
       this.manifest.spec.env = {};
@@ -372,7 +380,7 @@ export class AgentManifestBuilder {
     this.manifest.spec.env[key] = value;
     return this;
   }
-  
+
   build(): AgentManifest {
     validateManifest(this.manifest);
     return this.manifest;
