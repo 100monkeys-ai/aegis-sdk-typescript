@@ -1,6 +1,6 @@
 {
   "name": "@100monkeys-ai/aegis-sdk",
-  "version": "0.14.0-pre-alpha",
+  "version": "0.15.0-pre-alpha",
   "description": "TypeScript SDK for building AEGIS agents",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
