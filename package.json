@@ -19,9 +19,9 @@
     "lint": "eslint src/**/*.ts"
   },
   "dependencies": {
-    "axios": "^1.14.0",
+    "axios": "^1.15.0",
     "yaml": "^2.8.3",
-    "@noble/curves": "^1.8.1"
+    "@noble/curves": "^2.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
