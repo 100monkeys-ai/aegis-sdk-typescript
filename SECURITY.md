@@ -16,22 +16,23 @@ This document describes the security architecture and threat model for Project A
 
 ```markdown
 ┌─────────────────────────────────────────────────┐
-│              Host Linux Kernel                  │
+│ Host Linux Kernel │
 └─────────────────────────────────────────────────┘
-                      │
-        ┌─────────────┼─────────────┐
-        ▼             ▼             ▼
-   ┌─────────┐  ┌─────────┐  ┌─────────┐
-   │  Micro  │  │  Micro  │  │  Micro  │
-   │  VM 1   │  │  VM 2   │  │  VM 3   │
-   │  (KVM)  │  │  (KVM)  │  │  (KVM)  │
-   └─────────┘  └─────────┘  └─────────┘
-   
-   Each VM:
-   - Isolated kernel
-   - Separate memory space
-   - Virtual network interface
-   - Ephemeral filesystem
+│
+┌─────────────┼─────────────┐
+▼ ▼ ▼
+┌─────────┐ ┌─────────┐ ┌─────────┐
+│ Micro │ │ Micro │ │ Micro │
+│ VM 1 │ │ VM 2 │ │ VM 3 │
+│ (KVM) │ │ (KVM) │ │ (KVM) │
+└─────────┘ └─────────┘ └─────────┘
+
+Each VM:
+
+- Isolated kernel
+- Separate memory space
+- Virtual network interface
+- Ephemeral filesystem
 ```
 
 **Key Properties**:
@@ -45,21 +46,22 @@ This document describes the security architecture and threat model for Project A
 
 ```markdown
 ┌─────────────────────────────────────────────────┐
-│               Host OS Kernel                    │
+│ Host OS Kernel │
 └─────────────────────────────────────────────────┘
-                      │
-        ┌─────────────┼─────────────┐
-        ▼             ▼             ▼
-   ┌─────────┐  ┌─────────┐  ┌─────────┐
-   │Container│  │Container│  │Container│
-   │    1    │  │    2    │  │    3    │
-   └─────────┘  └─────────┘  └─────────┘
-   
-   Each Container:
-   - Namespace isolation (PID, NET, MNT)
-   - Cgroup resource limits
-   - Seccomp syscall filtering
-   - AppArmor/SELinux profiles
+│
+┌─────────────┼─────────────┐
+▼ ▼ ▼
+┌─────────┐ ┌─────────┐ ┌─────────┐
+│Container│ │Container│ │Container│
+│ 1 │ │ 2 │ │ 3 │
+└─────────┘ └─────────┘ └─────────┘
+
+Each Container:
+
+- Namespace isolation (PID, NET, MNT)
+- Cgroup resource limits
+- Seccomp syscall filtering
+- AppArmor/SELinux profiles
 ```
 
 **Key Properties**:
@@ -87,16 +89,16 @@ permissions:
     allow:
       - "api.openai.com"
       - "*.googleapis.com"
-  
+
   # Filesystem: Restricted paths
   fs:
     read: ["/data/inputs"]
     write: ["/data/outputs"]
-  
+
   # Resources: Hard limits
   execution_time: 300s
   memory: 512MB
-  cpu_quota: 0.5  # 50% of one core
+  cpu_quota: 0.5 # 50% of one core
 ```
 
 ### Enforcement Points

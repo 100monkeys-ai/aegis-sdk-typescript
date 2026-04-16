@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright 2026 100monkeys.ai
-import crypto from 'crypto';
-import { Ed25519Key } from './crypto';
-import { createSealEnvelope, McpPayload } from './envelope';
+import crypto from "crypto";
+import { Ed25519Key } from "./crypto";
+import { createSealEnvelope, McpPayload } from "./envelope";
 
 export type AttestationResult = {
   security_token: string;
@@ -28,7 +28,7 @@ type InvokeResponse = {
 export class SEALError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'SEALError';
+    this.name = "SEALError";
   }
 }
 
@@ -48,7 +48,7 @@ export class SEALClient {
   private sessionId: string | null = null;
 
   constructor(gatewayUrl: string, workloadId: string, securityScope: string) {
-    this.gatewayUrl = gatewayUrl.replace(/\/$/, '');
+    this.gatewayUrl = gatewayUrl.replace(/\/$/, "");
     this.workloadId = workloadId;
     this.securityScope = securityScope;
   }
@@ -60,8 +60,8 @@ export class SEALClient {
     this.key = Ed25519Key.generate();
 
     const response = await fetch(`${this.gatewayUrl}/v1/seal/attest`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         public_key: this.key.getPublicKeyBase64(),
         workload_id: this.workloadId,
@@ -70,16 +70,22 @@ export class SEALClient {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => null) as AttestationResponse | null;
+      const errorData = (await response
+        .json()
+        .catch(() => null)) as AttestationResponse | null;
       if (errorData?.error) {
-        throw new SEALError(`Attestation failed: ${errorData.error.message ?? 'Unknown error'}`);
+        throw new SEALError(
+          `Attestation failed: ${errorData.error.message ?? "Unknown error"}`,
+        );
       }
       throw new SEALError(`Attestation failed: HTTP ${response.status}`);
     }
 
     const data = (await response.json()) as AttestationResponse;
-    if (data.status === 'error') {
-      throw new SEALError(`Attestation failed: ${data.message ?? 'Unknown error'}`);
+    if (data.status === "error") {
+      throw new SEALError(
+        `Attestation failed: ${data.message ?? "Unknown error"}`,
+      );
     }
 
     this.securityToken = data.security_token ?? null;
@@ -101,40 +107,54 @@ export class SEALClient {
     argumentsObj: Record<string, unknown>,
   ): Promise<unknown> {
     if (!this.securityToken || !this.key) {
-      throw new SEALError('No security token available. Must call attest() first.');
+      throw new SEALError(
+        "No security token available. Must call attest() first.",
+      );
     }
 
-    const reqId = `req-${crypto.randomBytes(4).toString('hex')}`;
+    const reqId = `req-${crypto.randomBytes(4).toString("hex")}`;
     const mcpPayload: McpPayload = {
-      jsonrpc: '2.0',
+      jsonrpc: "2.0",
       id: reqId,
-      method: 'tools/call',
+      method: "tools/call",
       params: { name: toolName, arguments: argumentsObj },
     };
 
-    const envelope = createSealEnvelope(this.securityToken, mcpPayload, this.key);
+    const envelope = createSealEnvelope(
+      this.securityToken,
+      mcpPayload,
+      this.key,
+    );
 
     const response = await fetch(`${this.gatewayUrl}/v1/seal/invoke`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(envelope),
     });
 
-    const responseData = await response.json().catch(() => null) as InvokeResponse | null;
+    const responseData = (await response
+      .json()
+      .catch(() => null)) as InvokeResponse | null;
 
     if (!response.ok) {
       if (responseData?.error?.message) {
-        throw new SEALError(`SEAL Gateway Rejected: ${responseData.error.message}`);
+        throw new SEALError(
+          `SEAL Gateway Rejected: ${responseData.error.message}`,
+        );
       }
       throw new SEALError(`SEAL Gateway error: HTTP ${response.status}`);
     }
 
-    if (responseData?.status === 'error') {
-      throw new SEALError(`SEAL Gateway Error: ${responseData.error?.message ?? 'Unknown error'}`);
+    if (responseData?.status === "error") {
+      throw new SEALError(
+        `SEAL Gateway Error: ${responseData.error?.message ?? "Unknown error"}`,
+      );
     }
 
-    if (responseData?.payload && 'error' in responseData.payload) {
-      throw new SEALError(`MCP Tool Error: ${String(responseData.payload.error)}`);
+    if (responseData?.payload && "error" in responseData.payload) {
+      throw new SEALError(
+        `MCP Tool Error: ${String(responseData.payload.error)}`,
+      );
     }
 
     return responseData?.payload?.result ?? {};

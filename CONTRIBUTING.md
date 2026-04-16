@@ -100,15 +100,15 @@ AEGIS follows **Domain-Driven Design (DDD)** principles with clear separation of
 
 ```markdown
 orchestrator/
-├── core/           # Pure domain logic (no IO)
-│   ├── agent.rs    # Agent entities and value objects
-│   ├── runtime.rs  # Runtime trait and types
-│   ├── security.rs # Security policies
-│   └── swarm.rs    # Swarm coordination
-├── api/            # HTTP/gRPC server (adapter)
+├── core/ # Pure domain logic (no IO)
+│ ├── agent.rs # Agent entities and value objects
+│ ├── runtime.rs # Runtime trait and types
+│ ├── security.rs # Security policies
+│ └── swarm.rs # Swarm coordination
+├── api/ # HTTP/gRPC server (adapter)
 ├── runtime-docker/ # Docker implementation (adapter)
 ├── runtime-firecracker/ # Firecracker implementation
-└── security/       # Policy enforcement
+└── security/ # Policy enforcement
 ```
 
 ### Key Principles
@@ -183,7 +183,7 @@ Closes #123
 
 **Example**:
 
-```rust
+````rust
 /// Execute a task on a running agent instance.
 ///
 /// # Arguments
@@ -198,7 +198,7 @@ Closes #123
 /// let output = runtime.execute(&id, input).await?;
 /// ```
 pub async fn execute(&self, id: &InstanceId, input: TaskInput) -> Result<TaskOutput, RuntimeError>;
-```
+````
 
 ### Python
 
@@ -279,7 +279,7 @@ async fn test_docker_runtime_spawn() {
         runtime: "python:3.11".to_string(),
         // ...
     };
-    
+
     let instance_id = runtime.spawn(config).await.unwrap();
     assert!(!instance_id.as_str().is_empty());
 }

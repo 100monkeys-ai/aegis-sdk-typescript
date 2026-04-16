@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright 2026 100monkeys.ai
-import { ed25519 } from '@noble/curves/ed25519';
+import { ed25519 } from "@noble/curves/ed25519";
 
 /**
  * Manages ephemeral Ed25519 cryptographic keys for the SEAL protocol.
@@ -28,7 +28,7 @@ export class Ed25519Key {
    */
   public sign(message: Uint8Array): Uint8Array {
     if (!this.privateKey) {
-      throw new Error('Private key has been erased or is not initialized.');
+      throw new Error("Private key has been erased or is not initialized.");
     }
     return ed25519.sign(message, this.privateKey);
   }
@@ -37,7 +37,7 @@ export class Ed25519Key {
    * Produce a base64-encoded Ed25519 signature.
    */
   public signBase64(message: Uint8Array): string {
-    return Buffer.from(this.sign(message)).toString('base64');
+    return Buffer.from(this.sign(message)).toString("base64");
   }
 
   /**
@@ -45,7 +45,7 @@ export class Ed25519Key {
    */
   public getPublicKeyBytes(): Uint8Array {
     if (!this.publicKey) {
-      throw new Error('Public key has been erased or is not initialized.');
+      throw new Error("Public key has been erased or is not initialized.");
     }
     return this.publicKey;
   }
@@ -54,7 +54,7 @@ export class Ed25519Key {
    * Return the public key encoded in base64.
    */
   public getPublicKeyBase64(): string {
-    return Buffer.from(this.getPublicKeyBytes()).toString('base64');
+    return Buffer.from(this.getPublicKeyBytes()).toString("base64");
   }
 
   /**

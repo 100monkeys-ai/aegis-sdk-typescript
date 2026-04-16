@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright 2026 100monkeys.ai
-import { Ed25519Key } from './crypto';
+import { Ed25519Key } from "./crypto";
 
 /**
  * Standard MCP JSON-RPC payload definition.
@@ -45,19 +45,19 @@ export function createCanonicalMessage(
  * Recursively stringify an object with sorted keys and no whitespace.
  */
 export function stableStringify(obj: unknown): string {
-  if (obj === null || typeof obj !== 'object') {
+  if (obj === null || typeof obj !== "object") {
     return JSON.stringify(obj);
   }
   if (Array.isArray(obj)) {
     const items = (obj as unknown[]).map(stableStringify);
-    return `[${items.join(',')}]`;
+    return `[${items.join(",")}]`;
   }
   const record = obj as Record<string, unknown>;
   const keys = Object.keys(record).sort();
   const pairs = keys
     .filter((k) => record[k] !== undefined)
     .map((k) => `${JSON.stringify(k)}:${stableStringify(record[k])}`);
-  return `{${pairs.join(',')}}`;
+  return `{${pairs.join(",")}}`;
 }
 
 /**
@@ -72,11 +72,15 @@ export function createSealEnvelope(
   const timestampIso = now.toISOString();
   const timestampUnix = Math.floor(now.getTime() / 1000);
 
-  const canonicalBytes = createCanonicalMessage(securityToken, mcpPayload, timestampUnix);
+  const canonicalBytes = createCanonicalMessage(
+    securityToken,
+    mcpPayload,
+    timestampUnix,
+  );
   const signatureB64 = privateKey.signBase64(canonicalBytes);
 
   return {
-    protocol: 'seal/v1',
+    protocol: "seal/v1",
     security_token: securityToken,
     signature: signatureB64,
     payload: mcpPayload,
