@@ -17,28 +17,30 @@ npm install @100monkeys-ai/aegis-sdk
 ## Quick Start
 
 ```typescript
-import { AegisClient } from '@100monkeys-ai/aegis-sdk';
+import { AegisClient } from "@100monkeys-ai/aegis-sdk";
 
 async function main() {
-  // Create a client — token acquisition and refresh are handled automatically
+  // Option 1: OAuth2 Client Credentials (service-to-service)
   const client = new AegisClient({
-    baseUrl: 'https://your-orchestrator.example.com',
-    keycloakUrl: 'https://auth.example.com',
-    realm: 'aegis-system',
-    clientId: 'your-client-id',
-    clientSecret: 'your-client-secret',
+    baseUrl: "https://your-orchestrator.example.com",
+    keycloakUrl: "https://auth.example.com",
+    realm: "aegis-system",
+    clientId: "your-client-id",
+    clientSecret: "your-client-secret",
+  });
+
+  // Option 2: Static bearer token (API keys, testing)
+  const client2 = new AegisClient({
+    baseUrl: "https://your-orchestrator.example.com",
+    bearerToken: "your-api-key-or-jwt",
   });
 
   // Start an execution
   const { execution_id } = await client.startExecution(
-    'my-agent',
-    'Summarize my emails from today',
+    "my-agent",
+    "Summarize my emails from today",
   );
   console.log(`Execution started: ${execution_id}`);
-
-  // Stream execution events
-  const stream = await client.streamExecution(execution_id);
-  // Handle SSE events from the stream...
 }
 
 main();
@@ -46,12 +48,237 @@ main();
 
 ## Features
 
-- **Type-safe API**: Full TypeScript type definitions
+- **Type-safe API**: Full TypeScript type definitions for all endpoints
 - **Promise-based**: Modern async/await interface
 - **OAuth2 Client Credentials**: Automatic token acquisition and refresh via
   axios interceptor
+- **Bearer Token Auth**: Static token support for API keys and testing
 - **Manifest validation**: Runtime validation of agent configurations
 - **Minimal dependencies**: Lightweight footprint with only essential packages
+
+## API Reference
+
+### Authentication
+
+```typescript
+interface AegisClientOptions {
+  baseUrl: string;
+  bearerToken?: string; // Static bearer token (skips Keycloak)
+  keycloakUrl?: string; // Required if bearerToken not set
+  realm?: string; // Required if bearerToken not set
+  clientId?: string; // Required if bearerToken not set
+  clientSecret?: string; // Required if bearerToken not set
+  tokenRefreshBufferSecs?: number; // default: 30
+}
+```
+
+### Agent Lifecycle
+
+```typescript
+client.listAgents({ scope?, limit?, agent_type? })
+client.getAgent(id)
+client.deployAgent(manifest, { force?, scope? })
+client.updateAgent(id, update)
+client.deleteAgent(id)
+client.lookupAgent(name)
+client.executeAgent(agentId, input, intent?, contextOverrides?)
+client.listAgentVersions(id, limit?)
+client.updateAgentScope(id, scope)
+client.streamAgentEvents(agentId)
+```
+
+### Execution Lifecycle
+
+```typescript
+client.startExecution(agentId, input, contextOverrides?, intent?)
+client.streamExecution(executionId, token?)
+client.listExecutions({ agent_id?, workflow_name?, limit?, offset?, status? })
+client.getExecution(executionId)
+client.cancelExecution(executionId, reason?)
+client.deleteExecution(executionId)
+client.getExecutionFile(executionId, path)
+```
+
+### Workflow Orchestration
+
+```typescript
+client.listWorkflows({ scope?, limit?, visible? })
+client.getWorkflow(name)
+client.getWorkflowYaml(name)
+client.registerWorkflow(yaml, { scope?, force? })
+client.deleteWorkflow(name)
+client.listWorkflowVersions(name, limit?)
+client.updateWorkflowScope(name, scope)
+client.runWorkflow(name, input?, contextOverrides?)
+client.executeWorkflow(workflowName, input?, version?, timeout?)
+```
+
+### Workflow Execution Lifecycle
+
+```typescript
+client.listWorkflowExecutions({ workflow_name?, limit?, status? })
+client.getWorkflowExecution(executionId)
+client.deleteWorkflowExecution(executionId)
+client.signalWorkflowExecution(executionId, signalName, payload?)
+client.cancelWorkflowExecution(executionId, reason?)
+client.getWorkflowExecutionLogs(executionId, limit?, offset?)
+client.streamWorkflowExecutionLogs(executionId)
+```
+
+### Volumes
+
+```typescript
+client.createVolume(label, sizeLimitBytes?)
+client.listVolumes(limit?)
+client.getVolume(id)
+client.renameVolume(id, label)
+client.deleteVolume(id)
+client.getQuota()
+client.listFiles(volumeId, path?)
+client.downloadFile(volumeId, path)
+client.uploadFile(volumeId, path, file)
+client.mkdir(volumeId, path)
+client.movePath(volumeId, from, to)
+client.deletePath(volumeId, path)
+```
+
+### Credentials
+
+```typescript
+client.listCredentials()
+client.storeApiKeyCredential(provider, apiKeyValue, metadata?)
+client.oauthInitiate(provider, redirectUri?, scopes?)
+client.oauthCallback(code, state)
+client.devicePoll(deviceCode, provider)
+client.getCredential(id)
+client.revokeCredential(id)
+client.rotateCredential(id, request?)
+client.listGrants(credentialId)
+client.addGrant(credentialId, grant)
+client.revokeGrant(credentialId, grantId)
+```
+
+### Secrets
+
+```typescript
+client.listSecrets(pathPrefix?)
+client.getSecret(path)
+client.writeSecret(path, value, encoding?)
+client.deleteSecret(path)
+```
+
+### API Keys
+
+```typescript
+client.listApiKeys()
+client.createApiKey(name, scopes, expiresAt?)
+client.revokeApiKey(id)
+```
+
+### Colony
+
+```typescript
+client.listMembers(limit?)
+client.inviteMember(email, role)
+client.removeMember(userId)
+client.updateRole(userId, role)
+client.getSamlConfig()
+client.setSamlConfig(config)
+client.getSubscription()
+```
+
+### Cluster
+
+```typescript
+client.getClusterStatus()
+client.listClusterNodes(limit?)
+```
+
+### Swarms
+
+```typescript
+client.listSwarms(limit?)
+client.getSwarm(swarmId)
+```
+
+### Stimuli
+
+```typescript
+client.ingestStimulus(payload)
+client.listStimuli(limit?)
+client.getStimulus(stimulusId)
+client.sendWebhook(source, payload)
+```
+
+### Observability
+
+```typescript
+client.listSecurityIncidents(limit?)
+client.listStorageViolations(limit?)
+client.getDashboardSummary()
+```
+
+### Cortex
+
+```typescript
+client.listCortexPatterns(query?, limit?)
+client.getCortexSkills(limit?)
+client.getCortexMetrics(metricType?)
+```
+
+### User
+
+```typescript
+client.getUserRateLimitUsage();
+```
+
+### Human Approvals
+
+```typescript
+client.listPendingApprovals()
+client.getPendingApproval(id)
+client.approveRequest(id, request?)
+client.rejectRequest(id, request)
+```
+
+### SEAL
+
+```typescript
+client.attestSeal(payload)
+client.invokeSeal(payload)
+client.listSealTools(securityContext?)
+```
+
+### Dispatch Gateway
+
+```typescript
+client.dispatchGateway(payload);
+```
+
+### Admin: Tenant Management
+
+```typescript
+client.createTenant(slug, displayName, tier?)
+client.listTenants()
+client.suspendTenant(slug)
+client.deleteTenant(slug)
+```
+
+### Admin: Rate Limits
+
+```typescript
+client.listRateLimitOverrides(tenantId?, userId?)
+client.createRateLimitOverride(payload)
+client.deleteRateLimitOverride(overrideId)
+client.getRateLimitUsage(scopeType, scopeId)
+```
+
+### Health
+
+```typescript
+client.healthLive();
+client.healthReady();
+```
 
 ## Agent Manifest
 
@@ -77,160 +304,6 @@ tools:
 
 env:
   OPENAI_API_KEY: "secret:openai-key"
-```
-
-## API Reference
-
-### AegisClientOptions
-
-```typescript
-interface AegisClientOptions {
-  baseUrl: string;
-  keycloakUrl: string;
-  realm: string;
-  clientId: string;
-  clientSecret: string;
-  tokenRefreshBufferSecs?: number; // default: 30
-}
-```
-
-### AegisClient
-
-The client authenticates using OAuth2 Client Credentials. On each request, an axios
-interceptor calls Keycloak to obtain a bearer token (or reuses a cached one) and
-attaches it as an `Authorization: Bearer <token>` header. Tokens are proactively
-refreshed `tokenRefreshBufferSecs` before expiry.
-
-```typescript
-class AegisClient {
-  constructor(options: AegisClientOptions)
-
-  // Execution
-  startExecution(agentId: string, input: string, contextOverrides?: any, intent?: string): Promise<StartExecutionResponse>
-  streamExecution(executionId: string, token?: string): Promise<any>
-
-  // Human Approvals
-  listPendingApprovals(): Promise<{ pending_requests: PendingApproval[]; count: number }>
-  getPendingApproval(id: string): Promise<{ request: PendingApproval }>
-  approveRequest(id: string, request?: ApprovalRequest): Promise<ApprovalResponse>
-  rejectRequest(id: string, request: RejectionRequest): Promise<ApprovalResponse>
-
-  // SEAL
-  attestSeal(payload: any): Promise<SealAttestationResponse>
-  invokeSeal(payload: any): Promise<any>
-  listSealTools(securityContext?: string): Promise<SealToolsResponse>
-
-  // Dispatch Gateway
-  dispatchGateway(payload: any): Promise<any>
-
-  // Stimulus
-  ingestStimulus(payload: any): Promise<any>
-  sendWebhook(source: string, payload: any): Promise<any>
-
-  // Workflow Logs
-  getWorkflowExecutionLogs(executionId: string, limit?: number, offset?: number): Promise<WorkflowExecutionLogs>
-  streamWorkflowExecutionLogs(executionId: string): Promise<any>
-
-  // Admin: Tenant Management
-  createTenant(slug: string, displayName: string, tier?: string): Promise<Tenant>
-  listTenants(): Promise<{ tenants: Tenant[]; count: number }>
-  suspendTenant(slug: string): Promise<{ status: string; slug: string }>
-  deleteTenant(slug: string): Promise<{ status: string; slug: string }>
-
-  // Admin: Rate Limits
-  listRateLimitOverrides(tenantId?: string, userId?: string): Promise<{ overrides: RateLimitOverride[]; count: number }>
-  createRateLimitOverride(payload: any): Promise<RateLimitOverride>
-  deleteRateLimitOverride(overrideId: string): Promise<{ status: string; id: string }>
-  getRateLimitUsage(scopeType: string, scopeId: string): Promise<{ usage: UsageRecord[]; count: number }>
-
-  // Health
-  healthLive(): Promise<{ status: string }>
-  healthReady(): Promise<{ status: string }>
-}
-```
-
-### Types
-
-```typescript
-interface StartExecutionResponse {
-  execution_id: string;
-}
-
-interface PendingApproval {
-  id: string;
-  execution_id: string;
-  prompt: string;
-  created_at: string;
-  timeout_seconds: number;
-}
-
-interface ApprovalRequest {
-  feedback?: string;
-  approved_by?: string;
-}
-
-interface RejectionRequest {
-  reason: string;
-  rejected_by?: string;
-}
-
-interface ApprovalResponse {
-  status: string;
-}
-
-interface SealAttestationResponse {
-  security_token: string;
-}
-
-interface SealToolsResponse {
-  protocol: string;
-  attestation_endpoint: string;
-  invoke_endpoint: string;
-  security_context?: string;
-  tools: any[];
-}
-
-interface WorkflowExecutionLogs {
-  execution_id: string;
-  events: any[];
-  count: number;
-  limit: number;
-  offset: number;
-}
-
-interface Tenant {
-  slug: string;
-  display_name: string;
-  status: string;
-  tier: string;
-  keycloak_realm: string;
-  openbao_namespace: string;
-  quotas: TenantQuotas;
-  created_at: string;
-  updated_at: string;
-  deleted_at?: string;
-}
-
-interface RateLimitOverride {
-  id: string;
-  resource_type: string;
-  bucket: string;
-  limit_value: number;
-  tenant_id?: string;
-  user_id?: string;
-  burst_value?: number;
-  created_at: string;
-  updated_at: string;
-}
-
-interface UsageRecord {
-  scope_type: string;
-  scope_id: string;
-  resource_type: string;
-  bucket: string;
-  window_start: string;
-  counter: number;
-}
 ```
 
 ## Examples
