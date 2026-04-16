@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright 2026 100monkeys.ai
-import { ed25519 } from "@noble/curves/ed25519";
+import { ed25519 } from "@noble/curves/ed25519.js";
 import { createCanonicalMessage, McpPayload } from "./envelope";
 import { SEALError } from "./client";
 

@@ -4,7 +4,9 @@ module.exports = {
   testMatch: ["**/__tests__/**/*.test.ts"],
   moduleFileExtensions: ["ts", "js", "json"],
   transform: {
-    "^.+\.tsx?$": ["@swc/jest"],
+    "^.+\\.tsx?$": ["@swc/jest"],
+    "^.+\\.jsx?$": ["@swc/jest"],
   },
+  transformIgnorePatterns: ["node_modules/(?!@noble/)"],
   forceExit: true,
 };

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright 2026 100monkeys.ai
-import { ed25519 } from "@noble/curves/ed25519";
+import { ed25519 } from "@noble/curves/ed25519.js";
 
 /**
  * Manages ephemeral Ed25519 cryptographic keys for the SEAL protocol.
@@ -18,7 +18,7 @@ export class Ed25519Key {
    */
   public static generate(): Ed25519Key {
     const key = new Ed25519Key();
-    key.privateKey = ed25519.utils.randomPrivateKey();
+    key.privateKey = ed25519.utils.randomSecretKey();
     key.publicKey = ed25519.getPublicKey(key.privateKey);
     return key;
   }
