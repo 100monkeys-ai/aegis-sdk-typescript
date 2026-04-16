@@ -40,6 +40,7 @@ import {
   StimulusListResponse,
   StimulusSummary,
   StorageViolation,
+  PricingResponse,
   Subscription,
   SwarmListResponse,
   SwarmSummary,
@@ -1010,6 +1011,69 @@ export class AegisClient {
    */
   async getSubscription(): Promise<Subscription> {
     const response = await this.client.get("/v1/colony/subscription");
+    return response.data;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Billing
+  // ---------------------------------------------------------------------------
+
+  /**
+   * List available pricing tiers. GET /v1/billing/prices
+   */
+  async listPrices(): Promise<PricingResponse> {
+    const response = await this.client.get("/v1/billing/prices");
+    return response.data;
+  }
+
+  /**
+   * Create a Stripe Checkout Session. POST /v1/billing/checkout
+   */
+  async createCheckoutSession(options: {
+    price_id: string;
+    seat_price_id?: string;
+    seats?: number;
+  }): Promise<{ url: string }> {
+    const response = await this.client.post("/v1/billing/checkout", options);
+    return response.data;
+  }
+
+  /**
+   * Create a Stripe Customer Portal session. POST /v1/billing/portal
+   */
+  async createPortalSession(): Promise<{ url: string }> {
+    const response = await this.client.post("/v1/billing/portal");
+    return response.data;
+  }
+
+  /**
+   * Get subscription billing details. GET /v1/billing/subscription
+   */
+  async getSubscriptionBilling(): Promise<{
+    tier: string;
+    status: string;
+    current_period_end: string;
+    cancel_at_period_end: boolean;
+    stripe_customer_id: string;
+  }> {
+    const response = await this.client.get("/v1/billing/subscription");
+    return response.data;
+  }
+
+  /**
+   * List invoices. GET /v1/billing/invoices
+   */
+  async getInvoices(): Promise<{
+    invoices: Array<{
+      id: string;
+      amount: number;
+      currency: string;
+      status: string;
+      created: string;
+      pdf_url: string;
+    }>;
+  }> {
+    const response = await this.client.get("/v1/billing/invoices");
     return response.data;
   }
 

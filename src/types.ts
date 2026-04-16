@@ -579,6 +579,30 @@ export interface CortexMetrics {
   avg_success_rate?: number;
 }
 
+// --- Billing ---
+
+export interface TierPrice {
+  price_id: string;
+  amount: number;
+  currency: string;
+}
+
+export interface TierPricing {
+  tier: string;
+  product_id: string;
+  name: string;
+  description: string;
+  included_seats: number;
+  monthly: TierPrice | null;
+  annual: TierPrice | null;
+  seat_monthly: TierPrice | null;
+  seat_annual: TierPrice | null;
+}
+
+export interface PricingResponse {
+  tiers: TierPricing[];
+}
+
 // --- User ---
 
 export interface UserRateLimitUsage {
