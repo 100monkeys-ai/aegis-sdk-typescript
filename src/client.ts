@@ -8,6 +8,7 @@ import {
   ApiKeyWithValue,
   ApprovalRequest,
   ApprovalResponse,
+  AttachmentRef,
   ClusterNodesResponse,
   ClusterStatus,
   ColonyMember,
@@ -59,6 +60,11 @@ import {
   WorkflowSummary,
   WorkflowVersionListResponse,
 } from "./types";
+import {
+  AttachToVolumeOptions,
+  AttachmentSource,
+  attachToVolume as attachToVolumeImpl,
+} from "./uploads";
 
 export interface AegisClientOptions {
   baseUrl: string;
@@ -202,17 +208,24 @@ export class AegisClient {
 
   /**
    * Execute an agent. POST /v1/agents/{agentId}/execute
+   *
+   * `attachments` is wired through to `ExecuteAgentRequest.attachments` on
+   * the proto (per ADR-113). Each ref is typically obtained from
+   * {@link attachToVolume}.
    */
   async executeAgent(
     agentId: string,
     input: string,
     intent?: string,
     contextOverrides?: unknown,
+    attachments?: AttachmentRef[],
   ): Promise<ExecuteAgentResponse> {
     const payload: any = { input };
     if (intent !== undefined) payload.intent = intent;
     if (contextOverrides !== undefined)
       payload.context_overrides = contextOverrides;
+    if (attachments && attachments.length > 0)
+      payload.attachments = attachments;
     const response = await this.client.post(
       `/v1/agents/${agentId}/execute`,
       payload,
@@ -259,17 +272,24 @@ export class AegisClient {
 
   /**
    * Start a new execution. POST /v1/executions
+   *
+   * `attachments` is wired through to `ExecuteAgentRequest.attachments` on
+   * the proto (per ADR-113). Each ref is typically obtained from
+   * {@link attachToVolume}.
    */
   async startExecution(
     agentId: string,
     input: string,
     contextOverrides?: any,
     intent?: string,
+    attachments?: AttachmentRef[],
   ): Promise<StartExecutionResponse> {
     const payload: any = { agent_id: agentId, input };
     if (contextOverrides !== undefined)
       payload.context_overrides = contextOverrides;
     if (intent !== undefined) payload.intent = intent;
+    if (attachments && attachments.length > 0)
+      payload.attachments = attachments;
     const response = await this.client.post("/v1/executions", payload);
     return response.data;
   }
@@ -453,17 +473,23 @@ export class AegisClient {
 
   /**
    * Execute a workflow via Temporal. POST /v1/workflows/temporal/execute
+   *
+   * `attachments` is wired through to the workflow execution input per
+   * ADR-113. Each ref is typically obtained from {@link attachToVolume}.
    */
   async executeWorkflow(
     workflowName: string,
     input?: unknown,
     version?: string,
     timeout?: number,
+    attachments?: AttachmentRef[],
   ): Promise<ExecuteWorkflowResponse> {
     const payload: any = { workflow_name: workflowName };
     if (input !== undefined) payload.input = input;
     if (version !== undefined) payload.version = version;
     if (timeout !== undefined) payload.timeout = timeout;
+    if (attachments && attachments.length > 0)
+      payload.attachments = attachments;
     const response = await this.client.post(
       "/v1/workflows/temporal/execute",
       payload,
@@ -652,6 +678,29 @@ export class AegisClient {
       },
     );
     return response.data;
+  }
+
+  /**
+   * Stream a file to a user volume and return a structured `AttachmentRef`.
+   *
+   * Per ADR-113, lifetime is named explicitly by the volume the caller
+   * chooses — there is no implicit default. Pass
+   * `volumeId="chat-attachments"` to use the reserved per-user volume
+   * (lazy-provisioned by the orchestrator on first upload). Any other
+   * name must already exist.
+   *
+   * The returned `AttachmentRef` carries the orchestrator's authoritative
+   * `mime_type` (it content-sniffs server-side and may correct the
+   * client-inferred value), `size`, and (when available) `sha256`. Pass
+   * it through `executeAgent`, `startExecution`, or `executeWorkflow`
+   * via the `attachments` parameter.
+   */
+  async attachToVolume(
+    volumeId: string,
+    source: AttachmentSource,
+    options?: AttachToVolumeOptions,
+  ): Promise<AttachmentRef> {
+    return attachToVolumeImpl(this.client, volumeId, source, options);
   }
 
   /**

@@ -342,6 +342,24 @@ export interface UploadFileResponse {
   uploaded_at: string;
 }
 
+/**
+ * A structured reference to a file attached to an execution.
+ *
+ * Mirrors the `AttachmentRef` proto message carried on
+ * `ExecuteAgentRequest.attachments`. Returned by
+ * {@link AegisClient.attachToVolume} and accepted by `executeAgent`,
+ * `startExecution`, and `executeWorkflow` via their `attachments`
+ * parameter.
+ */
+export interface AttachmentRef {
+  volume_id: string;
+  path: string;
+  name: string;
+  mime_type: string;
+  size: number;
+  sha256?: string;
+}
+
 // --- Credentials ---
 
 export interface CredentialSummary {
