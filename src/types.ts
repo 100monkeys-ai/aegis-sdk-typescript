@@ -27,6 +27,7 @@ export interface ExecutionSummary {
   status: string;
   started_at: string;
   ended_at?: string;
+  summary?: string | null;
 }
 
 export interface ExecutionDetail extends ExecutionSummary {
@@ -149,6 +150,7 @@ export interface WorkflowExecutionSummary {
   started_at: string;
   ended_at?: string;
   current_state?: string;
+  summary?: string | null;
 }
 
 export interface WorkflowExecutionListResponse {
