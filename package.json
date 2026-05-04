@@ -19,8 +19,8 @@
     "lint": "eslint src/**/*.ts"
   },
   "dependencies": {
-    "axios": "^1.15.2",
-    "yaml": "^2.8.3",
+    "axios": "^1.16.0",
+    "yaml": "^2.8.4",
     "@noble/curves": "^2.2.0"
   },
   "devDependencies": {
