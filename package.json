@@ -5,6 +5,9 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "license": "AGPL-3.0",
+  "engines": {
+    "node": ">=22"
+  },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
@@ -19,17 +22,17 @@
     "lint": "eslint 'src/**/*.ts'"
   },
   "dependencies": {
+    "@noble/curves": "^2.2.0",
     "axios": "^1.18.0",
-    "yaml": "^2.8.3",
-    "@noble/curves": "^2.2.0"
+    "yaml": "^2.8.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/jest": "^30.0.0",
-    "@types/node": "^25.9.8",
-    "eslint": "^10.11.0",
     "@swc/core": "^1.16.2",
     "@swc/jest": "^0.2.39",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.19.0",
+    "eslint": "^10.11.0",
     "jest": "^30.5.2",
     "typescript": "^6.0.3",
     "typescript-eslint": "8.70.1"
