@@ -28,14 +28,14 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@swc/core": "^1.16.2",
+    "@swc/core": "^1.16.13",
     "@swc/jest": "^0.2.39",
     "@types/jest": "^30.0.0",
-    "@types/node": "^24.19.0",
-    "eslint": "^10.11.0",
+    "@types/node": "^24.19.2",
+    "eslint": "^10.12.0",
     "jest": "^30.5.2",
     "typescript": "^6.0.3",
-    "typescript-eslint": "8.70.1"
+    "typescript-eslint": "8.71.1"
   },
   "keywords": [
     "aegis",
