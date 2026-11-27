@@ -163,30 +163,6 @@ export interface WorkflowSignalRequest {
   payload?: unknown;
 }
 
-// --- Human Approvals ---
-
-export interface PendingApproval {
-  id: string;
-  execution_id: string;
-  prompt: string;
-  created_at: string;
-  timeout_seconds: number;
-}
-
-export interface ApprovalRequest {
-  feedback?: string;
-  approved_by?: string;
-}
-
-export interface RejectionRequest {
-  reason: string;
-  rejected_by?: string;
-}
-
-export interface ApprovalResponse {
-  status: string;
-}
-
 // --- SEAL ---
 
 export interface SealAttestationRequest {
