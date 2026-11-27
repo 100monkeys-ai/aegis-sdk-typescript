@@ -232,15 +232,6 @@ client.getCortexMetrics(metricType?)
 client.getUserRateLimitUsage();
 ```
 
-### Human Approvals
-
-```typescript
-client.listPendingApprovals()
-client.getPendingApproval(id)
-client.approveRequest(id, request?)
-client.rejectRequest(id, request)
-```
-
 ### SEAL
 
 ```typescript

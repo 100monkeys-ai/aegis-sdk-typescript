@@ -6,8 +6,6 @@ import {
   AgentVersionListResponse,
   ApiKey,
   ApiKeyWithValue,
-  ApprovalRequest,
-  ApprovalResponse,
   AttachmentRef,
   ClusterNodesResponse,
   ClusterStatus,
@@ -25,10 +23,8 @@ import {
   ExecutionDetail,
   ExecutionListResponse,
   OAuthInitiateResponse,
-  PendingApproval,
   RateLimitOverride,
   RegisterWorkflowResponse,
-  RejectionRequest,
   RotateCredentialRequest,
   SamlConfigRequest,
   SamlIdpConfig,
@@ -1290,57 +1286,6 @@ export class AegisClient {
    */
   async getUserRateLimitUsage(): Promise<UserRateLimitUsage> {
     const response = await this.client.get("/v1/user/rate-limits/usage");
-    return response.data;
-  }
-
-  // ---------------------------------------------------------------------------
-  // Human Approvals
-  // ---------------------------------------------------------------------------
-
-  /**
-   * List pending approval requests. GET /v1/human-approvals
-   */
-  async listPendingApprovals(): Promise<{
-    pending_requests: PendingApproval[];
-    count: number;
-  }> {
-    const response = await this.client.get("/v1/human-approvals");
-    return response.data;
-  }
-
-  /**
-   * Get a specific pending approval. GET /v1/human-approvals/{id}
-   */
-  async getPendingApproval(id: string): Promise<{ request: PendingApproval }> {
-    const response = await this.client.get(`/v1/human-approvals/${id}`);
-    return response.data;
-  }
-
-  /**
-   * Approve a pending request. POST /v1/human-approvals/{id}/approve
-   */
-  async approveRequest(
-    id: string,
-    request: ApprovalRequest = {},
-  ): Promise<ApprovalResponse> {
-    const response = await this.client.post(
-      `/v1/human-approvals/${id}/approve`,
-      request,
-    );
-    return response.data;
-  }
-
-  /**
-   * Reject a pending request. POST /v1/human-approvals/{id}/reject
-   */
-  async rejectRequest(
-    id: string,
-    request: RejectionRequest,
-  ): Promise<ApprovalResponse> {
-    const response = await this.client.post(
-      `/v1/human-approvals/${id}/reject`,
-      request,
-    );
     return response.data;
   }
 
